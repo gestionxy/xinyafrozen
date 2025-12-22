@@ -68,7 +68,10 @@ const AdminDashboard: React.FC = () => {
                 if (filename.includes('__MACOSX') || filename.startsWith('.')) continue;
 
                 const fileData = await contents.files[filename].async('base64');
-                const nameWithoutExt = filename.split('/').pop()?.split('.').shift() || '';
+                const basename = filename.split('/').pop() || '';
+                const lastDotIndex = basename.lastIndexOf('.');
+                const nameWithoutExt = lastDotIndex === -1 ? basename : basename.substring(0, lastDotIndex);
+
                 // Store both exact and lowercase for better matching
                 imageMap[nameWithoutExt] = `data:image/png;base64,${fileData}`;
                 imageMap[nameWithoutExt.toLowerCase()] = `data:image/png;base64,${fileData}`;
