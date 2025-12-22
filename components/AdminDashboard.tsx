@@ -32,6 +32,8 @@ const AdminDashboard: React.FC = () => {
     setProducts(prods);
   };
 
+  const [uploadProgress, setUploadProgress] = useState<{ current: number, total: number } | null>(null);
+
   const handleUpload = async () => {
     if (!companyName || !excelFile) {
       alert("Please provide Company Name and Excel file.");
@@ -39,58 +41,96 @@ const AdminDashboard: React.FC = () => {
     }
 
     setIsUploading(true);
+    setUploadProgress({ current: 0, total: 0 });
+
     try {
       // Parse Excel
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const rows: any[] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const rows: any[] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-        const productNames = rows.map(r => r["Product Name"] || r["product name"]).filter(Boolean);
+          const productNames = rows.map(r => r["Product Name"] || r["product name"]).filter(Boolean);
 
-        // Parse Images if ZIP exists
-        let imageMap: Record<string, string> = {};
-        if (zipFile) {
-          const zip = new JSZip();
-          const contents = await zip.loadAsync(zipFile);
-          for (const filename of Object.keys(contents.files)) {
-            if (!contents.files[filename].dir) {
-              const fileData = await contents.files[filename].async('base64');
-              const nameWithoutExt = filename.split('/').pop()?.split('.').shift() || '';
-              imageMap[nameWithoutExt.toLowerCase()] = `data:image/png;base64,${fileData}`;
+          // Parse Images if ZIP exists
+          let imageMap: Record<string, string> = {};
+          let imageCount = 0;
+
+          if (zipFile) {
+            const zip = new JSZip();
+            const contents = await zip.loadAsync(zipFile);
+            for (const filename of Object.keys(contents.files)) {
+              if (!contents.files[filename].dir) {
+                // Ignore __MACOSX and hidden files
+                if (filename.includes('__MACOSX') || filename.startsWith('.')) continue;
+
+                const fileData = await contents.files[filename].async('base64');
+                const nameWithoutExt = filename.split('/').pop()?.split('.').shift() || '';
+                // Store both exact and lowercase for better matching
+                imageMap[nameWithoutExt] = `data:image/png;base64,${fileData}`;
+                imageMap[nameWithoutExt.toLowerCase()] = `data:image/png;base64,${fileData}`;
+                imageCount++;
+              }
             }
           }
+
+          const newProducts: Product[] = productNames.map(name => {
+            // Try exact match first, then lowercase
+            const img = imageMap[name] || imageMap[name.toLowerCase()] || null;
+            return {
+              id: Math.random().toString(36).substr(2, 9),
+              name,
+              image_url: img,
+              company_name: companyName,
+              batch_code: batchCode,
+              created_at: new Date().toISOString()
+            };
+          });
+
+          const productsWithImages = newProducts.filter(p => p.image_url).length;
+          console.log(`Parsed ${newProducts.length} products. Found ${imageCount} images in ZIP. Matched ${productsWithImages} images.`);
+
+          if (zipFile && productsWithImages === 0 && newProducts.length > 0) {
+            if (!confirm("Warning: No images were matched to products. Continue upload anyway?")) {
+              setIsUploading(false);
+              setUploadProgress(null);
+              return;
+            }
+          }
+
+          setUploadProgress({ current: 0, total: newProducts.length });
+
+          await db.addProducts(newProducts, (current, total) => {
+            setUploadProgress({ current, total });
+          });
+
+          await db.saveLastBatchCode(batchCode);
+
+          alert(`Successfully uploaded ${newProducts.length} products for batch ${batchCode}`);
+          await refreshProducts();
+
+          // Increment batch for next use
+          setBatchCode((parseInt(batchCode) + 1).toString().padStart(4, '0'));
+          setExcelFile(null);
+          setZipFile(null);
+          setCompanyName('');
+        } catch (innerErr) {
+          console.error(innerErr);
+          alert("Error processing file data: " + (innerErr as Error).message);
+        } finally {
+          setIsUploading(false);
+          setUploadProgress(null);
         }
-
-        const newProducts: Product[] = productNames.map(name => ({
-          id: Math.random().toString(36).substr(2, 9),
-          name,
-          image_url: imageMap[name.toLowerCase()] || null,
-          company_name: companyName,
-          batch_code: batchCode,
-          created_at: new Date().toISOString()
-        }));
-
-        await db.addProducts(newProducts);
-        await db.saveLastBatchCode(batchCode);
-
-        alert(`Successfully uploaded ${newProducts.length} products for batch ${batchCode}`);
-        await refreshProducts();
-
-        // Increment batch for next use
-        setBatchCode((parseInt(batchCode) + 1).toString().padStart(4, '0'));
-        setExcelFile(null);
-        setZipFile(null);
-        setCompanyName('');
       };
       reader.readAsArrayBuffer(excelFile);
     } catch (err) {
       console.error(err);
-      alert("Error processing upload.");
-    } finally {
+      alert("Error initiating upload.");
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -162,13 +202,27 @@ const AdminDashboard: React.FC = () => {
             />
           </div>
         </div>
-        <button
-          onClick={handleUpload}
-          disabled={isUploading}
-          className="mt-6 w-full lg:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2"
-        >
-          {isUploading ? "Processing..." : <><Upload size={20} /> Process Import</>}
-        </button>
+        <div className="mt-6">
+          {isUploading && uploadProgress ? (
+            <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden relative">
+              <div
+                className="bg-blue-600 h-full transition-all duration-300"
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              />
+              <p className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                Uploading {uploadProgress.current} / {uploadProgress.total}
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleUpload}
+              disabled={isUploading}
+              className="w-full lg:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2"
+            >
+              <Upload size={20} /> Process Import
+            </button>
+          )}
+        </div>
       </section>
 
       {/* Inventory List */}

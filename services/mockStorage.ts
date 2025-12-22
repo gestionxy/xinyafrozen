@@ -20,13 +20,16 @@ export const db = {
     return data || [];
   },
 
-  addProducts: async (newProducts: Product[]) => {
+  addProducts: async (newProducts: Product[], onProgress?: (current: number, total: number) => void) => {
     // Remove id to let Supabase generate it
     const productsToInsert = newProducts.map(({ id, ...rest }) => rest);
 
     // Batch insert to avoid payload too large errors with images
-    const BATCH_SIZE = 10;
-    for (let i = 0; i < productsToInsert.length; i += BATCH_SIZE) {
+    // Reducing to 1 to be extremely safe with large images
+    const BATCH_SIZE = 1;
+    const total = productsToInsert.length;
+
+    for (let i = 0; i < total; i += BATCH_SIZE) {
       const batch = productsToInsert.slice(i, i + BATCH_SIZE);
 
       const { error } = await supabase
@@ -36,6 +39,10 @@ export const db = {
       if (error) {
         console.error(`Error adding batch starting at index ${i}:`, error);
         throw error;
+      }
+
+      if (onProgress) {
+        onProgress(Math.min(i + BATCH_SIZE, total), total);
       }
     }
   },
@@ -69,7 +76,7 @@ export const db = {
     const { data, error } = await supabase
       .from('products')
       .select('batch_code')
-      .order('created_at', { ascending: false })
+      .order('batch_code', { ascending: false }) // Sort by batch_code to get the true highest
       .limit(1);
 
     if (error) {
