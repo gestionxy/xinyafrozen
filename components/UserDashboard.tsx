@@ -90,10 +90,18 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.company_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const [selectedCompany, setSelectedCompany] = useState<string>('All');
+
+  // Extract unique companies
+  const companies = ['All', ...Array.from(new Set(products.map(p => p.company_name))).sort()];
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    if (selectedCompany === 'All') {
+      return matchesSearch || p.company_name.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return p.company_name === selectedCompany && matchesSearch;
+  });
 
   const cartItems = Object.values(orders).map(o => {
     const p = products.find(prod => prod.id === o.productId);
@@ -109,15 +117,34 @@ const UserDashboard: React.FC = () => {
     <div className="space-y-6">
       {/* Tool Bar */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between sticky top-20 z-40 py-2">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Search products or companies..."
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
+        <div className="flex gap-4 w-full md:w-auto flex-1">
+          {/* Company Filter */}
+          <div className="relative w-full md:w-64">
+            <select
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-medium text-gray-700"
+              value={selectedCompany}
+              onChange={e => setSelectedCompany(e.target.value)}
+            >
+              {companies.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative w-full flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder={selectedCompany === 'All' ? "Search products or companies..." : `Search products in ${selectedCompany}...`}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
