@@ -1,0 +1,181 @@
+
+import { Product, OrderItem, HistorySession } from '../types';
+import { supabase } from './supabaseClient';
+
+const STORAGE_KEYS = {
+  CURRENT_ORDERS: 'xinya_current_orders',
+};
+
+export const db = {
+  getAllProducts: async (): Promise<Product[]> => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching products:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  addProducts: async (newProducts: Product[]) => {
+    // Remove id to let Supabase generate it, or keep it if we want client-side UUIDs (but Supabase defaults are better)
+    // The current app generates random IDs. Let's stick to the passed IDs or clean them.
+    // The SQL schema has `id uuid default uuid_generate_v4()`.
+    // If we pass an ID, it uses it. The app generates `Math.random()...` which is NOT a UUID.
+    // We MUST remove the ID and let Supabase generate it, OR change the app to generate UUIDs.
+    // Easier to let Supabase generate IDs.
+
+    const productsToInsert = newProducts.map(({ id, ...rest }) => rest);
+
+    const { error } = await supabase
+      .from('products')
+      .insert(productsToInsert);
+
+    if (error) {
+      console.error('Error adding products:', error);
+      throw error;
+    }
+  },
+
+  deleteProducts: async (ids: string[]) => {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .in('id', ids);
+
+    if (error) {
+      console.error('Error deleting products:', error);
+      throw error;
+    }
+
+    // Also cleanup associated orders from local storage if needed
+    const orders = db.getCurrentOrders();
+    let changed = false;
+    ids.forEach(id => {
+      if (orders[id]) {
+        delete orders[id];
+        changed = true;
+      }
+    });
+    if (changed) {
+      db.saveCurrentOrders(orders);
+    }
+  },
+
+  getLastBatchCode: async (): Promise<string> => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('batch_code')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error('Error getting last batch:', error);
+      return '0000';
+    }
+
+    return data?.[0]?.batch_code || '0000';
+  },
+
+  saveLastBatchCode: async (code: string) => {
+    // No-op: Batch code is derived from products
+  },
+
+  getCurrentOrders: (): Record<string, OrderItem> => {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_ORDERS) || '{}');
+  },
+
+  saveCurrentOrders: (orders: Record<string, OrderItem>) => {
+    localStorage.setItem(STORAGE_KEYS.CURRENT_ORDERS, JSON.stringify(orders));
+  },
+
+  archiveCurrentSession: async (orders: Record<string, OrderItem>, products: Product[]) => {
+    const now = new Date();
+    // Create Session
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('order_sessions')
+      .insert({
+        session_id: `SESSION_${now.getTime()}`, // Simple ID
+        created_at: now.toISOString()
+      })
+      .select()
+      .single();
+
+    if (sessionError || !sessionData) {
+      console.error('Error creating session:', sessionError);
+      throw sessionError;
+    }
+
+    const sessionId = sessionData.id;
+
+    // Create Order Items
+    const orderItems = Object.values(orders).map(order => {
+      const p = products.find(prod => prod.id === order.productId);
+      return {
+        session_id: sessionId,
+        product_id: order.productId, // Note: This might fail if product was deleted.
+        product_name: p?.name || 'Unknown',
+        company_name: p?.company_name || 'Unknown',
+        image_url: p?.image_url || null,
+        quantity: order.quantity,
+        unit: order.unit,
+        stock: order.stock,
+        created_at: now.toISOString()
+      };
+    });
+
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems);
+
+    if (itemsError) {
+      console.error('Error creating order items:', itemsError);
+      throw itemsError;
+    }
+
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_ORDERS);
+  },
+
+  getHistory: async (): Promise<HistorySession[]> => {
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('order_sessions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (sessionsError) {
+      console.error('Error fetching history:', sessionsError);
+      return [];
+    }
+
+    const history: HistorySession[] = [];
+
+    for (const session of sessions) {
+      const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('session_id', session.id);
+
+      if (itemsError) continue;
+
+      history.push({
+        id: session.id,
+        timestamp: new Date(session.created_at).toLocaleString(),
+        orders: items.map(item => ({
+          id: item.id,
+          productId: item.product_id,
+          stock: item.stock,
+          quantity: Number(item.quantity),
+          unit: item.unit,
+          productName: item.product_name,
+          companyName: item.company_name,
+          imageUrl: item.image_url
+        }))
+      });
+    }
+
+    return history;
+  }
+};

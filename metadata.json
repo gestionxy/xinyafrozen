@@ -1,0 +1,5 @@
+{
+  "name": "Frozen Goods Order Management",
+  "description": "A professional platform for managing frozen goods inventory and dealer ordering with batch uploads, image matching, and PDF order generation.",
+  "requestFramePermissions": []
+}
