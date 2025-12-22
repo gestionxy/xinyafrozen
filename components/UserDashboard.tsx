@@ -224,8 +224,39 @@ const UserDashboard: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-900">{item.productName}</td>
                       <td className="px-4 py-3 text-gray-600">{item.companyName}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.stock || '-'}</td>
-                      <td className="px-4 py-3 font-bold text-blue-600">{item.quantity} {item.unit}</td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          className="w-20 px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                          value={item.stock}
+                          onChange={(e) => {
+                            const newOrders = { ...orders };
+                            newOrders[item.productId] = { ...item, stock: e.target.value };
+                            setOrders(newOrders);
+                            db.saveCurrentOrders(newOrders);
+                          }}
+                          placeholder="Stock"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            className="w-20 px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-blue-600"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val) && val > 0) {
+                                const newOrders = { ...orders };
+                                newOrders[item.productId] = { ...item, quantity: val };
+                                setOrders(newOrders);
+                                db.saveCurrentOrders(newOrders);
+                              }
+                            }}
+                          />
+                          <span className="text-sm text-gray-500">{item.unit}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
                         <button
                           onClick={() => handleDeleteOrder(item.productId)}
