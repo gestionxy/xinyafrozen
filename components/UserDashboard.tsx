@@ -10,6 +10,7 @@ const UserDashboard: React.FC = () => {
   const [orders, setOrders] = useState<Record<string, OrderItem>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showCart, setShowCart] = useState(false);
 
   // Modal state
   const [tempStock, setTempStock] = useState('');
@@ -80,6 +81,7 @@ const UserDashboard: React.FC = () => {
       try {
         await db.archiveCurrentSession(orders, products);
         setOrders({});
+        setShowCart(false);
         alert("Cycle archived successfully.");
       } catch (error) {
         console.error(error);
@@ -92,6 +94,16 @@ const UserDashboard: React.FC = () => {
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.company_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const cartItems = Object.values(orders).map(o => {
+    const p = products.find(prod => prod.id === o.productId);
+    return {
+      ...o,
+      productName: p?.name || 'Unknown',
+      companyName: p?.company_name || 'Unknown',
+      imageUrl: p?.image_url || null
+    };
+  }).sort((a, b) => a.companyName.localeCompare(b.companyName) || a.productName.localeCompare(b.productName));
 
   return (
     <div className="space-y-6">
@@ -110,11 +122,16 @@ const UserDashboard: React.FC = () => {
 
         <div className="flex gap-2 w-full md:w-auto">
           <button
-            onClick={() => generatePDF(orders, products, "Current_Draft_Order")}
+            onClick={() => setShowCart(true)}
             disabled={Object.keys(orders).length === 0}
-            className="flex-1 md:flex-none px-6 py-3 bg-white border text-gray-700 rounded-xl hover:bg-gray-50 font-semibold disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+            className="flex-1 md:flex-none px-6 py-3 bg-white border text-gray-700 rounded-xl hover:bg-gray-50 font-semibold disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm relative"
           >
-            <FileDown size={20} /> Preview PDF
+            <ShoppingCart size={20} /> View Cart
+            {Object.keys(orders).length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center border-2 border-white">
+                {Object.keys(orders).length}
+              </span>
+            )}
           </button>
           <button
             onClick={handleEndCycle}
@@ -127,45 +144,121 @@ const UserDashboard: React.FC = () => {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {filteredProducts.map(p => {
-          const order = orders[p.id];
-          return (
-            <div
-              key={p.id}
-              onClick={() => openOrderModal(p)}
-              className={`group bg-white rounded-2xl p-3 border transition-all cursor-pointer hover:shadow-xl hover:border-blue-400 relative ${order ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200'}`}
-            >
-              <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden mb-3 relative">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
-                    <ShoppingCart size={32} />
-                    <span className="text-[10px] mt-1">No Preview</span>
-                  </div>
-                )}
-                {order && (
-                  <div className="absolute top-2 right-2 bg-blue-600 text-white p-1 rounded-full shadow-lg animate-bounce">
-                    <CheckCircle2 size={16} />
-                  </div>
-                )}
+      {filteredProducts.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {filteredProducts.map(p => {
+            const order = orders[p.id];
+            return (
+              <div
+                key={p.id}
+                onClick={() => openOrderModal(p)}
+                className={`group bg-white rounded-2xl p-3 border transition-all cursor-pointer hover:shadow-xl hover:border-blue-400 relative ${order ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200'}`}
+              >
+                <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden mb-3 relative">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                      <ShoppingCart size={32} />
+                      <span className="text-[10px] mt-1">No Preview</span>
+                    </div>
+                  )}
+                  {order && (
+                    <div className="absolute top-2 right-2 bg-blue-600 text-white p-1 rounded-full shadow-lg animate-bounce">
+                      <CheckCircle2 size={16} />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-blue-600 uppercase tracking-tight truncate">{p.company_name}</p>
+                  <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">{p.name}</h3>
+                  {order && (
+                    <div className="mt-2 text-sm font-bold text-red-600 animate-in fade-in slide-in-from-bottom-2">
+                      +{order.quantity} {order.unit}{order.quantity > 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs font-bold text-blue-600 uppercase tracking-tight truncate">{p.company_name}</p>
-                <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">{p.name}</h3>
-                {order && (
-                  <div className="mt-2 text-sm font-bold text-red-600 animate-in fade-in slide-in-from-bottom-2">
-                    +{order.quantity} {order.unit}{order.quantity > 1 ? 's' : ''}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <Search size={48} strokeWidth={1} />
+          <p className="mt-4 text-lg">No products found matching "{searchQuery}"</p>
+        </div>
+      )}
 
-      {/* Order Modal */}
+      {/* Cart Modal */}
+      {showCart && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b flex items-center justify-between bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <ShoppingCart className="text-blue-600" /> Current Order Review
+              </h2>
+              <button onClick={() => setShowCart(false)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500"><X size={24} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Image</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Product</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Company</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Stock</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Order Qty</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {cartItems.map(item => (
+                    <tr key={item.id} className="hover:bg-blue-50/50 transition-colors">
+                      <td className="px-4 py-3">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} className="w-12 h-12 object-cover rounded-lg border" />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-300"><ShoppingCart size={16} /></div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{item.productName}</td>
+                      <td className="px-4 py-3 text-gray-600">{item.companyName}</td>
+                      <td className="px-4 py-3 text-gray-600">{item.stock || '-'}</td>
+                      <td className="px-4 py-3 font-bold text-blue-600">{item.quantity} {item.unit}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleDeleteOrder(item.productId)}
+                          className="text-gray-400 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => generatePDF(orders, products, "Current_Draft_Order")}
+                className="px-6 py-3 bg-white border text-gray-700 rounded-xl hover:bg-gray-50 font-semibold flex items-center gap-2 shadow-sm"
+              >
+                <FileDown size={20} /> Download PDF
+              </button>
+              <button
+                onClick={handleEndCycle}
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-200"
+              >
+                <CheckCircle2 size={20} /> Submit Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Modal (Single Item) */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
