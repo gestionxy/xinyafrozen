@@ -16,6 +16,8 @@ const AdminDashboard: React.FC = () => {
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState<{ current: number, total: number } | null>(null);
 
   useEffect(() => {
     refreshProducts();
@@ -139,9 +141,23 @@ const AdminDashboard: React.FC = () => {
 
   const handleDeleteSelected = async () => {
     if (confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) {
-      await db.deleteProducts(Array.from(selectedIds));
-      setSelectedIds(new Set());
-      await refreshProducts();
+      setIsDeleting(true);
+      setDeleteProgress({ current: 0, total: selectedIds.size });
+
+      try {
+        await db.deleteProducts(Array.from(selectedIds), (current, total) => {
+          setDeleteProgress({ current, total });
+        });
+        setSelectedIds(new Set());
+        await refreshProducts();
+        alert("Deletion complete.");
+      } catch (error) {
+        console.error(error);
+        alert("Error deleting products. Please try again.");
+      } finally {
+        setIsDeleting(false);
+        setDeleteProgress(null);
+      }
     }
   };
 
@@ -246,9 +262,16 @@ const AdminDashboard: React.FC = () => {
             {selectedIds.size > 0 && (
               <button
                 onClick={handleDeleteSelected}
-                className="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors flex items-center gap-2"
+                disabled={isDeleting}
+                className="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors flex items-center gap-2 disabled:opacity-50"
               >
-                <Trash2 size={18} /> Delete Selected ({selectedIds.size})
+                {isDeleting ? (
+                  <span>Deleting {deleteProgress?.current} / {deleteProgress?.total}...</span>
+                ) : (
+                  <>
+                    <Trash2 size={18} /> Delete Selected ({selectedIds.size})
+                  </>
+                )}
               </button>
             )}
           </div>

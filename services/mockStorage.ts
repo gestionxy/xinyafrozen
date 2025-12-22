@@ -47,15 +47,25 @@ export const db = {
     }
   },
 
-  deleteProducts: async (ids: string[]) => {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .in('id', ids);
+  deleteProducts: async (ids: string[], onProgress?: (current: number, total: number) => void) => {
+    const BATCH_SIZE = 50;
+    const total = ids.length;
 
-    if (error) {
-      console.error('Error deleting products:', error);
-      throw error;
+    for (let i = 0; i < total; i += BATCH_SIZE) {
+      const batch = ids.slice(i, i + BATCH_SIZE);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .in('id', batch);
+
+      if (error) {
+        console.error(`Error deleting batch starting at index ${i}:`, error);
+        throw error;
+      }
+
+      if (onProgress) {
+        onProgress(Math.min(i + BATCH_SIZE, total), total);
+      }
     }
 
     // Also cleanup associated orders from local storage if needed
