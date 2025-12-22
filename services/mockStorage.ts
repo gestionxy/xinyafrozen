@@ -21,22 +21,22 @@ export const db = {
   },
 
   addProducts: async (newProducts: Product[]) => {
-    // Remove id to let Supabase generate it, or keep it if we want client-side UUIDs (but Supabase defaults are better)
-    // The current app generates random IDs. Let's stick to the passed IDs or clean them.
-    // The SQL schema has `id uuid default uuid_generate_v4()`.
-    // If we pass an ID, it uses it. The app generates `Math.random()...` which is NOT a UUID.
-    // We MUST remove the ID and let Supabase generate it, OR change the app to generate UUIDs.
-    // Easier to let Supabase generate IDs.
-
+    // Remove id to let Supabase generate it
     const productsToInsert = newProducts.map(({ id, ...rest }) => rest);
 
-    const { error } = await supabase
-      .from('products')
-      .insert(productsToInsert);
+    // Batch insert to avoid payload too large errors with images
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < productsToInsert.length; i += BATCH_SIZE) {
+      const batch = productsToInsert.slice(i, i + BATCH_SIZE);
 
-    if (error) {
-      console.error('Error adding products:', error);
-      throw error;
+      const { error } = await supabase
+        .from('products')
+        .insert(batch);
+
+      if (error) {
+        console.error(`Error adding batch starting at index ${i}:`, error);
+        throw error;
+      }
     }
   },
 
