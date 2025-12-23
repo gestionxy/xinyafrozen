@@ -44,5 +44,6 @@ export enum ViewMode {
   ADMIN = 'admin',
   HISTORY = 'history',
   SIMPLE_ORDER = 'simple_order',
-  SIMPLE_ADMIN = 'simple_admin'
+  SIMPLE_ADMIN = 'simple_admin',
+  LANDING = 'landing'
 }

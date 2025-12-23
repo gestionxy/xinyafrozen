@@ -6,10 +6,11 @@ import SimpleOrderAdmin from './components/SimpleOrderAdmin';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import HistoryDashboard from './components/HistoryDashboard';
-import { Package, ShieldCheck, History, LogOut, ClipboardList } from 'lucide-react';
+import LandingPage from './components/LandingPage';
+import { Package, ShieldCheck, History, LogOut, ClipboardList, Home } from 'lucide-react';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewMode>(ViewMode.USER);
+  const [view, setView] = useState<ViewMode>(ViewMode.LANDING);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loginForm, setLoginForm] = useState({ user: '', pass: '' });
 
@@ -153,6 +154,13 @@ const App: React.FC = () => {
               </button>
             </form>
           </div>
+        )}
+
+        {view === ViewMode.LANDING && (
+          <LandingPage
+            onSelectSimple={() => setView(ViewMode.SIMPLE_ORDER)}
+            onSelectCatalog={() => setView(ViewMode.USER)}
+          />
         )}
 
         {view === ViewMode.USER && <UserDashboard />}
