@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/mockStorage';
 import { SimpleOrder, SimpleOrderSession } from '../types';
-import { Save, Trash2, Download, RefreshCw, LogOut } from 'lucide-react';
+import { Save, Trash2, Download, RefreshCw, LogOut, Edit2, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface SimpleOrderFormProps {
@@ -18,6 +18,12 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
     const [productName, setProductName] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [quantity, setQuantity] = useState('');
+
+    // Edit State
+    const [editingOrder, setEditingOrder] = useState<SimpleOrder | null>(null);
+    const [editProductName, setEditProductName] = useState('');
+    const [editCompanyName, setEditCompanyName] = useState('');
+    const [editQuantity, setEditQuantity] = useState('');
 
     useEffect(() => {
         loadSession();
@@ -78,6 +84,33 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
         } catch (error) {
             console.error(error);
             alert("Failed to delete item.");
+        }
+    };
+
+    const startEdit = (order: SimpleOrder) => {
+        setEditingOrder(order);
+        setEditProductName(order.product_name);
+        setEditCompanyName(order.company_name || '');
+        setEditQuantity(order.quantity.toString());
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingOrder || !session) return;
+
+        try {
+            await db.updateSimpleOrder(editingOrder.id, {
+                product_name: editProductName,
+                company_name: editCompanyName,
+                quantity: parseFloat(editQuantity)
+            });
+
+            setEditingOrder(null);
+            const ords = await db.getSimpleOrders(session.id);
+            setOrders(ords);
+        } catch (error) {
+            console.error(error);
+            alert("Failed to update order.");
         }
     };
 
@@ -197,10 +230,18 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                                     <td className="px-6 py-3 text-gray-600">{order.company_name || '-'}</td>
                                     <td className="px-6 py-3 font-bold text-blue-600">{order.quantity}</td>
                                     <td className="px-6 py-3 text-sm text-gray-500">{new Date(order.created_at).toLocaleString()}</td>
-                                    <td className="px-6 py-3">
+                                    <td className="px-6 py-3 flex items-center gap-2">
+                                        <button
+                                            onClick={() => startEdit(order)}
+                                            className="text-blue-400 hover:text-blue-600 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
                                         <button
                                             onClick={() => handleDelete(order.id)}
                                             className="text-red-400 hover:text-red-600 transition-colors"
+                                            title="Delete"
                                         >
                                             <Trash2 size={18} />
                                         </button>
@@ -218,7 +259,75 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                     </table>
                 </div>
             </div>
-        </div>
+
+
+            {/* Edit Modal */}
+            {
+                editingOrder && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">Edit Order</h2>
+                                <button onClick={() => setEditingOrder(null)} className="text-gray-400 hover:text-gray-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleUpdate} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Product Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={editProductName}
+                                        onChange={e => setEditProductName(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Company
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={editCompanyName}
+                                        onChange={e => setEditCompanyName(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Quantity
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={editQuantity}
+                                        onChange={e => setEditQuantity(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingOrder(null)}
+                                        className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                                    >
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
