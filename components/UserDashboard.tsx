@@ -2,10 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Product, OrderItem, OrderUnit } from '../types';
 import { db } from '../services/mockStorage';
-import { Search, ShoppingCart, Info, CheckCircle2, FileDown, Trash2, X } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, FileDown, Trash2, X, LogOut } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 
-const UserDashboard: React.FC = () => {
+interface UserDashboardProps {
+  onExit?: () => void;
+}
+
+const UserDashboard: React.FC<UserDashboardProps> = ({ onExit }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Record<string, OrderItem>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,7 +107,7 @@ const UserDashboard: React.FC = () => {
     return p.company_name === selectedCompany && matchesSearch;
   });
 
-  const cartItems = Object.values(orders).map(o => {
+  const cartItems = Object.values(orders).map((o: OrderItem) => {
     const p = products.find(prod => prod.id === o.productId);
     return {
       ...o,
@@ -167,6 +171,14 @@ const UserDashboard: React.FC = () => {
           >
             <CheckCircle2 size={20} /> End Cycle
           </button>
+          {onExit && (
+            <button
+              onClick={onExit}
+              className="flex-1 md:flex-none px-4 py-3 bg-white border text-gray-600 rounded-xl hover:bg-gray-50 font-semibold flex items-center justify-center gap-2 shadow-sm"
+            >
+              <LogOut size={20} /> Exit
+            </button>
+          )}
         </div>
       </div>
 

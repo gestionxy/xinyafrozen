@@ -163,7 +163,7 @@ const App: React.FC = () => {
           />
         )}
 
-        {view === ViewMode.USER && <UserDashboard />}
+        {view === ViewMode.USER && <UserDashboard onExit={() => setView(ViewMode.LANDING)} />}
         {view === ViewMode.ADMIN && isAdmin && <AdminDashboard />}
         {view === ViewMode.HISTORY && <HistoryDashboard />}
       </main>
