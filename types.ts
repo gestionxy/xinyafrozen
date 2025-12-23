@@ -30,6 +30,7 @@ export interface SimpleOrder {
   product_name: string;
   company_name: string;
   quantity: number;
+  department: string;
   created_at: string;
 }
 

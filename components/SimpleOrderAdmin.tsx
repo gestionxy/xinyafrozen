@@ -50,6 +50,7 @@ const SimpleOrderAdmin: React.FC<SimpleOrderAdminProps> = ({ onExit }) => {
                 'No.': index + 1,
                 'Product Name': o.product_name,
                 'Company': o.company_name,
+                'Department': o.department || 'Frozen',
                 'Quantity (Cases)': o.quantity,
                 'Time': new Date(o.created_at).toLocaleString()
             }));
@@ -96,6 +97,7 @@ const SimpleOrderAdmin: React.FC<SimpleOrderAdminProps> = ({ onExit }) => {
                             <tr>
                                 <th className="px-4 py-2">Product</th>
                                 <th className="px-4 py-2">Company</th>
+                                <th className="px-4 py-2">Dept</th>
                                 <th className="px-4 py-2">Qty</th>
                             </tr>
                         </thead>
@@ -104,6 +106,7 @@ const SimpleOrderAdmin: React.FC<SimpleOrderAdminProps> = ({ onExit }) => {
                                 <tr key={o.id}>
                                     <td className="px-4 py-2">{o.product_name}</td>
                                     <td className="px-4 py-2">{o.company_name}</td>
+                                    <td className="px-4 py-2">{o.department || 'Frozen'}</td>
                                     <td className="px-4 py-2">{o.quantity}</td>
                                 </tr>
                             ))}
