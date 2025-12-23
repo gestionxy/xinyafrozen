@@ -1,15 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { ViewMode } from './types';
+import SimpleOrderForm from './components/SimpleOrderForm';
+import SimpleOrderAdmin from './components/SimpleOrderAdmin';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import HistoryDashboard from './components/HistoryDashboard';
-import { Package, ShieldCheck, History, LogOut } from 'lucide-react';
+import { Package, ShieldCheck, History, LogOut, ClipboardList } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>(ViewMode.USER);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loginForm, setLoginForm] = useState({ user: '', pass: '' });
+
+  // Simple Admin State
+  const [isSimpleAdmin, setIsSimpleAdmin] = useState(false);
+  const [simpleLoginForm, setSimpleLoginForm] = useState({ user: '', pass: '' });
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,17 +27,70 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSimpleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (simpleLoginForm.user === 'admin' && simpleLoginForm.pass === 'xinya-888') {
+      setIsSimpleAdmin(true);
+    } else {
+      alert('Invalid credentials');
+    }
+  };
+
   const NavButton = ({ targetView, icon: Icon, label }: { targetView: ViewMode, icon: any, label: string }) => (
     <button
       onClick={() => setView(targetView)}
-      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-        view === targetView ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
-      }`}
+      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${view === targetView ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+        }`}
     >
       <Icon size={20} />
       <span className="font-medium">{label}</span>
     </button>
   );
+
+  // Render Simple Order View
+  if (view === ViewMode.SIMPLE_ORDER) {
+    return <SimpleOrderForm onExit={() => setView(ViewMode.USER)} />;
+  }
+
+  // Render Simple Admin View
+  if (view === ViewMode.SIMPLE_ADMIN) {
+    if (!isSimpleAdmin) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-100 relative">
+            <button onClick={() => setView(ViewMode.USER)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <LogOut size={20} />
+            </button>
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Simple Order Admin</h2>
+            <form onSubmit={handleSimpleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={simpleLoginForm.user}
+                  onChange={e => setSimpleLoginForm({ ...simpleLoginForm, user: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={simpleLoginForm.pass}
+                  onChange={e => setSimpleLoginForm({ ...simpleLoginForm, pass: e.target.value })}
+                />
+              </div>
+              <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors">
+                Login
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+    return <SimpleOrderAdmin onExit={() => { setIsSimpleAdmin(false); setView(ViewMode.USER); }} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,16 +103,26 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold text-gray-800 tracking-tight">Xinya Frozen Logistics</h1>
           </div>
-          
+
           <nav className="hidden md:flex items-center space-x-2">
+            <NavButton targetView={ViewMode.SIMPLE_ORDER} icon={ClipboardList} label="Simple Order Form" />
+            <div className="w-px h-6 bg-gray-300 mx-2"></div>
             <NavButton targetView={ViewMode.USER} icon={Package} label="Order Catalog" />
             <NavButton targetView={ViewMode.HISTORY} icon={History} label="History" />
             <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />
+            <button
+              onClick={() => setView(ViewMode.SIMPLE_ADMIN)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${view === ViewMode.SIMPLE_ADMIN ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+            >
+              <ShieldCheck size={20} />
+              <span className="font-medium">Simple Admin</span>
+            </button>
           </nav>
 
           {isAdmin && (
-            <button 
-              onClick={() => {setIsAdmin(false); setView(ViewMode.USER);}} 
+            <button
+              onClick={() => { setIsAdmin(false); setView(ViewMode.USER); }}
               className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors"
               title="Logout Admin"
             >
@@ -71,20 +140,20 @@ const App: React.FC = () => {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={loginForm.user}
-                  onChange={e => setLoginForm({...loginForm, user: e.target.value})}
+                  onChange={e => setLoginForm({ ...loginForm, user: e.target.value })}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={loginForm.pass}
-                  onChange={e => setLoginForm({...loginForm, pass: e.target.value})}
+                  onChange={e => setLoginForm({ ...loginForm, pass: e.target.value })}
                 />
               </div>
               <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors">

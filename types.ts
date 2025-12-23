@@ -24,8 +24,25 @@ export interface HistorySession {
   orders: (OrderItem & { productName: string; companyName: string; imageUrl: string | null })[];
 }
 
+export interface SimpleOrder {
+  id: string;
+  session_id: string;
+  product_name: string;
+  company_name: string;
+  quantity: number;
+  created_at: string;
+}
+
+export interface SimpleOrderSession {
+  id: string;
+  created_at: string;
+  ended_at: string | null;
+}
+
 export enum ViewMode {
   USER = 'user',
   ADMIN = 'admin',
-  HISTORY = 'history'
+  HISTORY = 'history',
+  SIMPLE_ORDER = 'simple_order',
+  SIMPLE_ADMIN = 'simple_admin'
 }

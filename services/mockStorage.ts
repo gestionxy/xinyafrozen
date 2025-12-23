@@ -1,5 +1,5 @@
 
-import { Product, OrderItem, HistorySession } from '../types';
+import { Product, OrderItem, HistorySession, SimpleOrder, SimpleOrderSession } from '../types';
 import { supabase } from './supabaseClient';
 
 const STORAGE_KEYS = {
@@ -194,5 +194,87 @@ export const db = {
     }
 
     return history;
+  },
+
+  // Simple Order Form Methods
+  getSimpleSession: async (): Promise<SimpleOrderSession> => {
+    // Try to find an active session (ended_at is null)
+    const { data, error } = await supabase
+      .from('simple_order_sessions')
+      .select('*')
+      .is('ended_at', null)
+      .single();
+
+    if (data) return data;
+
+    // If no active session, create one
+    const { data: newSession, error: createError } = await supabase
+      .from('simple_order_sessions')
+      .insert({})
+      .select()
+      .single();
+
+    if (createError || !newSession) {
+      console.error('Error creating simple session:', createError);
+      throw createError;
+    }
+    return newSession;
+  },
+
+  getSimpleOrders: async (sessionId: string): Promise<SimpleOrder[]> => {
+    const { data, error } = await supabase
+      .from('simple_orders')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('company_name', { ascending: true })
+      .order('product_name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching simple orders:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  addSimpleOrder: async (order: Omit<SimpleOrder, 'id' | 'created_at'>) => {
+    const { error } = await supabase
+      .from('simple_orders')
+      .insert(order);
+    if (error) throw error;
+  },
+
+  updateSimpleOrder: async (id: string, updates: Partial<SimpleOrder>) => {
+    const { error } = await supabase
+      .from('simple_orders')
+      .update(updates)
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  deleteSimpleOrder: async (id: string) => {
+    const { error } = await supabase
+      .from('simple_orders')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  endSimpleSession: async (sessionId: string) => {
+    const { error } = await supabase
+      .from('simple_order_sessions')
+      .update({ ended_at: new Date().toISOString() })
+      .eq('id', sessionId);
+    if (error) throw error;
+  },
+
+  getSimpleHistory: async (): Promise<SimpleOrderSession[]> => {
+    const { data, error } = await supabase
+      .from('simple_order_sessions')
+      .select('*')
+      .not('ended_at', 'is', null)
+      .order('ended_at', { ascending: false });
+
+    if (error) return [];
+    return data || [];
   }
 };
