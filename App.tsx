@@ -49,7 +49,7 @@ const App: React.FC = () => {
 
   // Render Simple Order View
   if (view === ViewMode.SIMPLE_ORDER) {
-    return <SimpleOrderForm onExit={() => setView(ViewMode.USER)} />;
+    return <SimpleOrderForm onExit={() => setView(ViewMode.USER)} onAdminClick={() => setView(ViewMode.SIMPLE_ADMIN)} />;
   }
 
   // Render Simple Admin View
@@ -110,14 +110,6 @@ const App: React.FC = () => {
             <NavButton targetView={ViewMode.USER} icon={Package} label="Order Catalog" />
             <NavButton targetView={ViewMode.HISTORY} icon={History} label="History" />
             <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />
-            <button
-              onClick={() => setView(ViewMode.SIMPLE_ADMIN)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${view === ViewMode.SIMPLE_ADMIN ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-            >
-              <ShieldCheck size={20} />
-              <span className="font-medium">Simple Admin</span>
-            </button>
           </nav>
 
           {isAdmin && (

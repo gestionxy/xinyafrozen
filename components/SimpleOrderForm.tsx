@@ -6,9 +6,10 @@ import * as XLSX from 'xlsx';
 
 interface SimpleOrderFormProps {
     onExit: () => void;
+    onAdminClick: () => void;
 }
 
-const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit }) => {
+const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick }) => {
     const [session, setSession] = useState<SimpleOrderSession | null>(null);
     const [orders, setOrders] = useState<SimpleOrder[]>([]);
     const [loading, setLoading] = useState(true);
@@ -101,9 +102,14 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit }) => {
         <div className="max-w-4xl mx-auto p-6 space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-800">Simple Order Form</h1>
-                <button onClick={onExit} className="text-gray-600 hover:text-gray-900 flex items-center gap-2">
-                    <LogOut size={20} /> Exit
-                </button>
+                <div className="flex items-center gap-3">
+                    <button onClick={onAdminClick} className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                        Admin Login
+                    </button>
+                    <button onClick={onExit} className="text-gray-600 hover:text-gray-900 flex items-center gap-2">
+                        <LogOut size={20} /> Exit
+                    </button>
+                </div>
             </div>
 
             {/* Input Form */}
