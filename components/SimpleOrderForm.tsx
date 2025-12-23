@@ -36,6 +36,18 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
             const sess = await db.getSimpleSession();
             setSession(sess);
             const ords = await db.getSimpleOrders(sess.id);
+            // Sort: Company -> Department -> Product Name
+            ords.sort((a, b) => {
+                const companyA = a.company_name || '';
+                const companyB = b.company_name || '';
+                if (companyA !== companyB) return companyA.localeCompare(companyB);
+
+                const deptA = a.department || 'Frozen';
+                const deptB = b.department || 'Frozen';
+                if (deptA !== deptB) return deptA.localeCompare(deptB);
+
+                return a.product_name.localeCompare(b.product_name);
+            });
             setOrders(ords);
         } catch (error) {
             console.error(error);
@@ -70,6 +82,17 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
 
             // Refresh list
             const ords = await db.getSimpleOrders(session.id);
+            ords.sort((a, b) => {
+                const companyA = a.company_name || '';
+                const companyB = b.company_name || '';
+                if (companyA !== companyB) return companyA.localeCompare(companyB);
+
+                const deptA = a.department || 'Frozen';
+                const deptB = b.department || 'Frozen';
+                if (deptA !== deptB) return deptA.localeCompare(deptB);
+
+                return a.product_name.localeCompare(b.product_name);
+            });
             setOrders(ords);
         } catch (error) {
             console.error(error);
@@ -83,6 +106,17 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
             await db.deleteSimpleOrder(id);
             if (session) {
                 const ords = await db.getSimpleOrders(session.id);
+                ords.sort((a, b) => {
+                    const companyA = a.company_name || '';
+                    const companyB = b.company_name || '';
+                    if (companyA !== companyB) return companyA.localeCompare(companyB);
+
+                    const deptA = a.department || 'Frozen';
+                    const deptB = b.department || 'Frozen';
+                    if (deptA !== deptB) return deptA.localeCompare(deptB);
+
+                    return a.product_name.localeCompare(b.product_name);
+                });
                 setOrders(ords);
             }
         } catch (error) {
@@ -113,6 +147,17 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
 
             setEditingOrder(null);
             const ords = await db.getSimpleOrders(session.id);
+            ords.sort((a, b) => {
+                const companyA = a.company_name || '';
+                const companyB = b.company_name || '';
+                if (companyA !== companyB) return companyA.localeCompare(companyB);
+
+                const deptA = a.department || 'Frozen';
+                const deptB = b.department || 'Frozen';
+                if (deptA !== deptB) return deptA.localeCompare(deptB);
+
+                return a.product_name.localeCompare(b.product_name);
+            });
             setOrders(ords);
         } catch (error) {
             console.error(error);
