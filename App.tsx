@@ -50,7 +50,7 @@ const App: React.FC = () => {
 
   // Render Simple Order View
   if (view === ViewMode.SIMPLE_ORDER) {
-    return <SimpleOrderForm onExit={() => setView(ViewMode.USER)} onAdminClick={() => setView(ViewMode.SIMPLE_ADMIN)} />;
+    return <SimpleOrderForm onExit={() => setView(ViewMode.LANDING)} onAdminClick={() => setView(ViewMode.SIMPLE_ADMIN)} />;
   }
 
   // Render Simple Admin View
@@ -90,7 +90,7 @@ const App: React.FC = () => {
         </div>
       );
     }
-    return <SimpleOrderAdmin onExit={() => { setIsSimpleAdmin(false); setView(ViewMode.USER); }} />;
+    return <SimpleOrderAdmin onExit={() => { setIsSimpleAdmin(false); setView(ViewMode.LANDING); }} />;
   }
 
   return (
