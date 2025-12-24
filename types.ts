@@ -29,8 +29,9 @@ export interface SimpleOrder {
   session_id: string;
   product_name: string;
   company_name: string;
-  quantity: number;
+  quantity: number | null;
   department: string;
+  note: string;
   created_at: string;
 }
 

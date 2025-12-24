@@ -19,6 +19,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
     const [companyName, setCompanyName] = useState('');
     const [quantity, setQuantity] = useState('');
     const [department, setDepartment] = useState('Frozen');
+    const [note, setNote] = useState('');
 
     // Edit State
     const [editingOrder, setEditingOrder] = useState<SimpleOrder | null>(null);
@@ -26,6 +27,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
     const [editCompanyName, setEditCompanyName] = useState('');
     const [editQuantity, setEditQuantity] = useState('');
     const [editDepartment, setEditDepartment] = useState('Frozen');
+    const [editNote, setEditNote] = useState('');
 
     useEffect(() => {
         loadSession();
@@ -59,8 +61,8 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!productName || !quantity) {
-            alert("Product Name and Quantity are required.");
+        if (!productName) {
+            alert("Product Name is required.");
             return;
         }
         if (!session) return;
@@ -70,8 +72,9 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                 session_id: session.id,
                 product_name: productName,
                 company_name: companyName,
-                quantity: parseFloat(quantity),
-                department: department
+                quantity: quantity ? parseFloat(quantity) : null,
+                department: department,
+                note: note
             });
 
             // Reset form
@@ -79,6 +82,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
             setCompanyName('');
             setQuantity('');
             setDepartment('Frozen');
+            setNote('');
 
             // Refresh list
             const ords = await db.getSimpleOrders(session.id);
@@ -129,8 +133,9 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
         setEditingOrder(order);
         setEditProductName(order.product_name);
         setEditCompanyName(order.company_name || '');
-        setEditQuantity(order.quantity.toString());
+        setEditQuantity(order.quantity ? order.quantity.toString() : '');
         setEditDepartment(order.department || 'Frozen');
+        setEditNote(order.note || '');
     };
 
     const handleUpdate = async (e: React.FormEvent) => {
@@ -141,8 +146,9 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
             await db.updateSimpleOrder(editingOrder.id, {
                 product_name: editProductName,
                 company_name: editCompanyName,
-                quantity: parseFloat(editQuantity),
-                department: editDepartment
+                quantity: editQuantity ? parseFloat(editQuantity) : null,
+                department: editDepartment,
+                note: editNote
             });
 
             setEditingOrder(null);
@@ -172,6 +178,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
             'Company': o.company_name,
             'Department': o.department || 'Frozen',
             'Quantity (Cases)': o.quantity,
+            'Note': o.note,
             'Time': new Date(o.created_at).toLocaleString()
         }));
 
@@ -228,7 +235,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-1">
-                            3. 订购数量(箱) / Order Quantity (Cases) <span className="text-red-500">*</span>
+                            3. 订购数量(箱) / Order Quantity (Cases) <span className="text-gray-400 font-normal">(Optional)</span>
                         </label>
                         <input
                             type="number"
@@ -253,6 +260,19 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                             <option value="Poissonerie">鱼部 / Poissonerie</option>
                             <option value="Cusine">厨房 / Cusine</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                            5. 备注 / Note <span className="text-gray-400 font-normal">(Optional)</span>
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="请填写备注 / Please enter any notes"
+                            value={note}
+                            onChange={e => setNote(e.target.value)}
+                        />
                     </div>
 
                     <button
@@ -286,6 +306,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                                 <th className="px-6 py-3 font-semibold text-gray-600">Company</th>
                                 <th className="px-6 py-3 font-semibold text-gray-600">Department</th>
                                 <th className="px-6 py-3 font-semibold text-gray-600">Quantity</th>
+                                <th className="px-6 py-3 font-semibold text-gray-600">Note</th>
                                 <th className="px-6 py-3 font-semibold text-gray-600">Time</th>
                                 <th className="px-6 py-3 font-semibold text-gray-600">Action</th>
                             </tr>
@@ -304,7 +325,8 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                                             {order.department || 'Frozen'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-3 font-bold text-blue-600">{order.quantity}</td>
+                                    <td className="px-6 py-3 font-bold text-blue-600">{order.quantity || '-'}</td>
+                                    <td className="px-6 py-3 text-gray-500 text-sm max-w-xs truncate">{order.note || '-'}</td>
                                     <td className="px-6 py-3 text-sm text-gray-500">{new Date(order.created_at).toLocaleString()}</td>
                                     <td className="px-6 py-3 flex items-center gap-2">
                                         <button
@@ -326,7 +348,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                             ))}
                             {orders.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
+                                    <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
                                         No orders yet.
                                     </td>
                                 </tr>
@@ -396,6 +418,17 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                                         <option value="Poissonerie">鱼部 / Poissonerie</option>
                                         <option value="Cusine">厨房 / Cusine</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Note
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={editNote}
+                                        onChange={e => setEditNote(e.target.value)}
+                                    />
                                 </div>
                                 <div className="flex gap-3 mt-6">
                                     <button
