@@ -28,7 +28,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectSimple, onSelectCatal
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Simple Order Form</h2>
                         <p className="text-gray-500">
-                            Quickly submit orders by typing product names. Best for regular customers who know what they want.
+                            Quickly submit orders by typing product names. Best for our employees to order what we need.
                         </p>
                     </div>
                     <div className="w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
