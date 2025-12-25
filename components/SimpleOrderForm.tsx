@@ -191,7 +191,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
     if (loading) return <div className="p-8 text-center">Loading...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto p-6 space-y-8">
+        <div className="max-w-7xl mx-auto p-6 space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-800">Simple Order Form</h1>
                 <div className="flex items-center gap-3">
@@ -326,7 +326,7 @@ const SimpleOrderForm: React.FC<SimpleOrderFormProps> = ({ onExit, onAdminClick 
                                         </span>
                                     </td>
                                     <td className="px-6 py-3 font-bold text-blue-600">{order.quantity || '-'}</td>
-                                    <td className="px-6 py-3 text-gray-500 text-sm max-w-xs truncate">{order.note || '-'}</td>
+                                    <td className="px-6 py-3 text-gray-500 text-sm whitespace-pre-wrap break-words min-w-[200px]">{order.note || '-'}</td>
                                     <td className="px-6 py-3 text-sm text-gray-500">{new Date(order.created_at).toLocaleString()}</td>
                                     <td className="px-6 py-3 flex items-center gap-2">
                                         <button
