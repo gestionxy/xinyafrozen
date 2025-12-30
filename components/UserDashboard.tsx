@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, OrderItem, OrderUnit } from '../types';
 import { db } from '../services/mockStorage';
-import { Search, ShoppingCart, Info, CheckCircle2, FileDown, Trash2, X, LogOut } from 'lucide-react';
+import { Search, ShoppingCart, Info, FileDown, Trash2, X, LogOut } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 
 interface UserDashboardProps {
@@ -104,23 +104,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
     setSelectedProduct(null);
   };
 
-  const handleEndCycle = async () => {
-    if (Object.keys(orders).length === 0) {
-      alert("No active orders to complete.");
-      return;
-    }
-    if (confirm("End current ordering cycle? All active indicators will be cleared and data archived.")) {
-      try {
-        await db.archiveCurrentSession(orders, products);
-        setOrders({});
-        setShowCart(false);
-        alert("Cycle archived successfully.");
-      } catch (error) {
-        console.error(error);
-        alert("Failed to archive cycle.");
-      }
-    }
-  };
 
   const [selectedCompany, setSelectedCompany] = useState<string>('All');
 
@@ -191,13 +174,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
                 {Object.keys(orders).length}
               </span>
             )}
-          </button>
-          <button
-            onClick={handleEndCycle}
-            disabled={Object.keys(orders).length === 0}
-            className="flex-1 md:flex-none px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold disabled:bg-gray-400 flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-          >
-            <CheckCircle2 size={20} /> End Cycle
           </button>
           {onExit && (
             <button
