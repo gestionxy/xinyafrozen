@@ -47,6 +47,15 @@ const HistoryDashboard: React.FC = () => {
     }
   };
 
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      await db.deleteHistorySession(sessionId);
+      await loadHistory();
+    } catch (error) {
+      alert("Failed to delete session.");
+    }
+  };
+
   const handleDelete = async (itemId: string) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
     try {
@@ -95,6 +104,22 @@ const HistoryDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const password = prompt("Please enter admin password to confirm deletion:");
+                    if (password === 'xinya-888') {
+                      // Logic handled below to avoid closure issues in detailed implementation if complex, 
+                      // but simple enough here or better to have a handler function
+                      handleDeleteSession(session.id);
+                    } else if (password !== null) {
+                      alert("Incorrect password!");
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-600 hover:text-white transition-all flex items-center gap-2"
+                >
+                  <Trash2 size={18} /> Delete
+                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

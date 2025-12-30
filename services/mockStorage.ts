@@ -218,6 +218,29 @@ export const db = {
     }
   },
 
+  deleteHistorySession: async (sessionId: string) => {
+    // Delete items first (safer if no cascade)
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .delete()
+      .eq('session_id', sessionId);
+
+    if (itemsError) {
+      console.error('Error deleting session items:', itemsError);
+      throw itemsError;
+    }
+
+    const { error } = await supabase
+      .from('order_sessions')
+      .delete()
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Error deleting history session:', error);
+      throw error;
+    }
+  },
+
   // Simple Order Form Methods
   getSimpleSession: async (): Promise<SimpleOrderSession> => {
     // Try to find an active session (ended_at is null)
