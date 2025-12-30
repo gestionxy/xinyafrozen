@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, OrderItem, OrderUnit } from '../types';
 import { db } from '../services/mockStorage';
-import { Search, ShoppingCart, Info, FileDown, Trash2, X, LogOut } from 'lucide-react';
+import { Search, ShoppingCart, Info, FileDown, Trash2, X, LogOut, CheckCircle2 } from 'lucide-react';
 import { generatePDF } from '../utils/pdfGenerator';
 
 interface UserDashboardProps {
@@ -322,10 +322,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
                 <FileDown size={20} /> Download PDF
               </button>
               <button
-                onClick={handleEndCycle}
+                onClick={handleSubmitOrder}
                 className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-200"
               >
-                <CheckCircle2 size={20} /> Submit Order
+                <CheckCircle2 size={20} /> {editingSession ? "Update Session" : "Submit Order"}
               </button>
             </div>
           </div>
