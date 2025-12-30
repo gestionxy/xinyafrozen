@@ -241,6 +241,64 @@ export const db = {
     }
   },
 
+  addHistoryItem: async (sessionId: string, item: any) => {
+    // item should contain: productName, companyName, stock, quantity, unit
+    // productId is optional if manual
+    const { error } = await supabase
+      .from('order_items')
+      .insert({
+        session_id: sessionId,
+        product_name: item.productName,
+        company_name: item.companyName,
+        stock: item.stock,
+        quantity: item.quantity,
+        unit: item.unit || 'case',
+        product_id: item.productId || null, // Allow null for manual items
+        // image_url might be missing for manual items
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Error adding history item:', error);
+      throw error;
+    }
+  },
+
+  updateSessionOrders: async (sessionId: string, items: any[]) => {
+    // 1. Delete existing items
+    const { error: deleteError } = await supabase
+      .from('order_items')
+      .delete()
+      .eq('session_id', sessionId);
+
+    if (deleteError) {
+      console.error('Error clearing session items for update:', deleteError);
+      throw deleteError;
+    }
+
+    // 2. Insert new items
+    const newItems = items.map(item => ({
+      session_id: sessionId,
+      product_id: item.productId,
+      product_name: item.productName || item.name, // Handle different source formats
+      company_name: item.companyName || item.company,
+      image_url: item.imageUrl || item.image_url,
+      stock: item.stock,
+      quantity: item.quantity,
+      unit: item.unit || 'case',
+      created_at: new Date().toISOString()
+    }));
+
+    const { error: insertError } = await supabase
+      .from('order_items')
+      .insert(newItems);
+
+    if (insertError) {
+      console.error('Error inserting updated session items:', insertError);
+      throw insertError;
+    }
+  },
+
   // Simple Order Form Methods
   getSimpleSession: async (): Promise<SimpleOrderSession> => {
     // Try to find an active session (ended_at is null)

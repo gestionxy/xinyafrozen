@@ -7,9 +7,11 @@ import { generatePDF } from '../utils/pdfGenerator';
 
 interface UserDashboardProps {
   onExit?: () => void;
+  editingSession?: any; // Should ideally be HistorySession
+  onEditComplete?: () => void;
 }
 
-const UserDashboard: React.FC<UserDashboardProps> = ({ onExit }) => {
+const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, onEditComplete }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Record<string, OrderItem>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,10 +29,28 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit }) => {
       setProducts(prods.sort((a, b) =>
         a.company_name.localeCompare(b.company_name) || a.name.localeCompare(b.name)
       ));
-      setOrders(db.getCurrentOrders());
+
+      if (editingSession) {
+        // Initialize from session
+        const initialOrders: Record<string, OrderItem> = {};
+        editingSession.orders.forEach((o: any) => {
+          if (o.productId) {
+            initialOrders[o.productId] = {
+              id: o.id,
+              productId: o.productId,
+              stock: o.stock,
+              quantity: o.quantity,
+              unit: o.unit
+            };
+          }
+        });
+        setOrders(initialOrders);
+      } else {
+        setOrders(db.getCurrentOrders());
+      }
     };
     loadData();
-  }, []);
+  }, [editingSession]);
 
   const openOrderModal = (p: Product) => {
     setSelectedProduct(p);
@@ -62,9 +82,13 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit }) => {
       unit: tempUnit
     };
 
-    const nextOrders = { ...orders, [selectedProduct.id]: newOrder };
-    setOrders(nextOrders);
-    db.saveCurrentOrders(nextOrders);
+    const newOrders = { ...orders, [selectedProduct.id]: newOrder };
+    setOrders(newOrders);
+
+    if (!editingSession) {
+      db.saveCurrentOrders(newOrders);
+    }
+
     setSelectedProduct(null);
   };
 
@@ -72,7 +96,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit }) => {
     const next = { ...orders };
     delete next[productId];
     setOrders(next);
-    db.saveCurrentOrders(next);
+
+    if (!editingSession) {
+      db.saveCurrentOrders(next);
+    }
+
     setSelectedProduct(null);
   };
 
