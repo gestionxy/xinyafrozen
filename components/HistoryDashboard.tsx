@@ -111,11 +111,12 @@ const HistoryDashboard: React.FC = () => {
             {/* Expanded Details */}
             {expandedSessionId === session.id && (
               <div className="border-t border-gray-100 bg-white animate-in slide-in-from-top-2 duration-300">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 text-gray-600 font-semibold border-b">
+                <div className="overflow-x-auto max-h-[60vh] overflow-y-auto custom-scrollbar">
+                  <table className="w-full text-left text-sm relative">
+                    <thead className="bg-gray-50 text-gray-600 font-semibold border-b sticky top-0 z-10 shadow-sm">
                       <tr>
                         <th className="px-6 py-3 w-12">#</th>
+                        <th className="px-6 py-3 w-20">Image</th>
                         <th className="px-6 py-3">Product Name</th>
                         <th className="px-6 py-3">Company</th>
                         <th className="px-6 py-3 w-32">Stock Info</th>
@@ -127,6 +128,15 @@ const HistoryDashboard: React.FC = () => {
                       {session.orders.map((order, index) => (
                         <tr key={order.id} className="hover:bg-blue-50/30 transition-colors">
                           <td className="px-6 py-4 text-gray-400">{index + 1}</td>
+                          <td className="px-6 py-4">
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
+                              {order.imageUrl ? (
+                                <img src={order.imageUrl} alt={order.productName} className="w-full h-full object-cover" />
+                              ) : (
+                                <Package size={20} className="text-gray-300" />
+                              )}
+                            </div>
+                          </td>
                           <td className="px-6 py-4 font-medium text-gray-800">{order.productName}</td>
                           <td className="px-6 py-4 text-gray-600">{order.companyName}</td>
                           <td className="px-6 py-4">
