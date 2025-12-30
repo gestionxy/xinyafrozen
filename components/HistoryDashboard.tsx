@@ -311,7 +311,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                       <Search size={24} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-900">Select from Catalog</h4>
+                      <h4 className="font-bold text-gray-900">Select from Catalog / 返回商品页下单</h4>
                       <p className="text-sm text-gray-500">Search and add existing products</p>
                     </div>
                   </button>
@@ -324,8 +324,8 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                       <Edit2 size={24} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-900">Manual Input</h4>
-                      <p className="text-sm text-gray-500">Typle in product details manually</p>
+                      <h4 className="font-bold text-gray-900">Manual Input / 手动添加商品信息</h4>
+                      <p className="text-sm text-gray-500">Type in product details manually</p>
                     </div>
                   </button>
                 </div>

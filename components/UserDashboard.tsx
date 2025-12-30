@@ -104,6 +104,34 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
     setSelectedProduct(null);
   };
 
+  const handleSubmitOrder = async () => {
+    if (Object.keys(orders).length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+
+    if (editingSession) {
+      // Update existing session
+      try {
+        await db.updateSessionOrders(editingSession.id, Object.values(orders));
+        alert("Order session updated successfully!");
+        if (onEditComplete) onEditComplete();
+      } catch (e) {
+        alert("Failed to update session.");
+      }
+    } else {
+      // Create new session
+      try {
+        await db.archiveCurrentSession(orders, products);
+        alert("Order placed successfully!");
+        setOrders({}); // Clear cart
+        if (onExit) onExit(); // Or redirect appropriately
+      } catch (e) {
+        alert("Failed to place order. Please try again.");
+      }
+    }
+  };
+
 
   const [selectedCompany, setSelectedCompany] = useState<string>('All');
 
