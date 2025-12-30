@@ -116,7 +116,7 @@ const App: React.FC = () => {
               <NavButton targetView={ViewMode.LANDING} icon={Home} label="Home" />
               <NavButton targetView={ViewMode.USER} icon={Package} label="Order Catalog" />
               <NavButton targetView={ViewMode.HISTORY} icon={History} label="History" />
-              {isAdmin && <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />}
+              <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />
             </nav>
           </div>
         </div>
@@ -124,7 +124,12 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">
-        {view === ViewMode.LANDING && <LandingPage onViewChange={setView} />}
+        {view === ViewMode.LANDING && (
+          <LandingPage
+            onSelectSimple={() => setView(ViewMode.SIMPLE_ORDER)}
+            onSelectCatalog={() => setView(ViewMode.USER)}
+          />
+        )}
 
         {view === ViewMode.SIMPLE_ORDER && <SimpleOrderForm onExit={() => setView(ViewMode.LANDING)} />}
 
@@ -172,7 +177,38 @@ const App: React.FC = () => {
             }}
           />
         )}
-        {view === ViewMode.ADMIN && isAdmin && <AdminDashboard />}
+
+        {view === ViewMode.ADMIN && (
+          isAdmin ? <AdminDashboard /> : (
+            <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-20">
+              <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={loginForm.user}
+                    onChange={e => setLoginForm({ ...loginForm, user: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <input
+                    type="password"
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={loginForm.pass}
+                    onChange={e => setLoginForm({ ...loginForm, pass: e.target.value })}
+                  />
+                </div>
+                <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold">
+                  Login
+                </button>
+              </form>
+            </div>
+          )
+        )}
+
         {view === ViewMode.HISTORY && (
           <HistoryDashboard
             onEditSession={(session: any) => {
