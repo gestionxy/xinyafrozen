@@ -14,7 +14,7 @@ const DEFAULT_SUPPLIERS = [
     "TC FOODS（天上掉馅饼）", "TFI", "THL六福", "Transhing"
 ];
 
-const SupplierManager: React.FC => {
+const SupplierManager: React.FC = () => {
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [loading, setLoading] = useState(true);
     const [newSupplierName, setNewSupplierName] = useState('');

@@ -2,17 +2,26 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
-import { Upload, Search, Trash2, Edit, Save, X, PackagePlus, CheckCircle, Truck } from 'lucide-react';
-import { Product } from '../types';
+import { Upload, Search, Trash2, Edit, Save, X, PackagePlus, CheckCircle, Truck, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
+import { Product, Supplier } from '../types';
 import { db } from '../services/mockStorage';
 import SupplierManager from './SupplierManager';
 
 const AdminDashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [companyName, setCompanyName] = useState('');
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [companyName, setCompanyName] = useState(''); // Stores selected or typed company name
   const [batchCode, setBatchCode] = useState('0001');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Import UI State
+  const [isImportExpanded, setIsImportExpanded] = useState(false);
+  const [importMode, setImportMode] = useState<'batch' | 'single'>('batch');
+
+  // Single Product State
+  const [singleProductName, setSingleProductName] = useState('');
+  const [singleProductImage, setSingleProductImage] = useState<File | null>(null);
 
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [zipFile, setZipFile] = useState<File | null>(null);
@@ -22,6 +31,7 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     refreshProducts();
+    refreshSuppliers();
     const initBatch = async () => {
       const lastBatch = await db.getLastBatchCode();
       const nextBatch = (parseInt(lastBatch) + 1).toString().padStart(4, '0');
@@ -33,6 +43,11 @@ const AdminDashboard: React.FC = () => {
   const refreshProducts = async () => {
     const prods = await db.getAllProducts();
     setProducts(prods);
+  };
+
+  const refreshSuppliers = async () => {
+    const sups = await db.getSuppliers();
+    setSuppliers(sups);
   };
 
   const [uploadProgress, setUploadProgress] = useState<{ current: number, total: number } | null>(null);
@@ -140,6 +155,51 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleSingleUpload = async () => {
+    if (!companyName || !singleProductName) {
+      alert("Please provide Product Name and Company Name.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      let imageUrl: string | null = null;
+      if (singleProductImage) {
+        const reader = new FileReader();
+        imageUrl = await new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(singleProductImage);
+        });
+      }
+
+      const newProduct: Product = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: singleProductName,
+        image_url: imageUrl,
+        company_name: companyName,
+        batch_code: batchCode,
+        created_at: new Date().toISOString()
+      };
+
+      await db.addProducts([newProduct]);
+      await db.saveLastBatchCode(batchCode);
+
+      alert(`Successfully added product: ${singleProductName}`);
+      await refreshProducts();
+
+      // Increment batch
+      setBatchCode((parseInt(batchCode) + 1).toString().padStart(4, '0'));
+      setSingleProductName('');
+      setSingleProductImage(null);
+      // Keep company name as user might add more
+    } catch (e) {
+      console.error(e);
+      alert("Failed to add product.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleDeleteSelected = async () => {
     if (confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) {
       setIsDeleting(true);
@@ -182,71 +242,143 @@ const AdminDashboard: React.FC = () => {
       <SupplierManager />
 
       {/* Upload Section */}
-      <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <PackagePlus className="text-blue-600" />
-          Batch Inventory Import
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <label className="block text-sm font-medium mb-1">Company Name *</label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 border rounded-lg"
-              value={companyName}
-              onChange={e => setCompanyName(e.target.value)}
-              placeholder="e.g. FreshFoods Inc."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Batch Code</label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 border bg-gray-50 rounded-lg cursor-not-allowed"
-              value={batchCode}
-              readOnly
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Excel File (.xlsx) *</label>
-            <input
-              type="file"
-              accept=".xlsx,.csv"
-              className="w-full text-sm"
-              onChange={e => setExcelFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Images (ZIP - Optional)</label>
-            <input
-              type="file"
-              accept=".zip"
-              className="w-full text-sm"
-              onChange={e => setZipFile(e.target.files?.[0] || null)}
-            />
-          </div>
+      {/* Upload Section */}
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div
+          className="p-6 border-b flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => setIsImportExpanded(!isImportExpanded)}
+        >
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <PackagePlus className="text-blue-600" />
+            Batch Inventory Import
+          </h2>
+          {isImportExpanded ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
         </div>
-        <div className="mt-6">
-          {isUploading && uploadProgress ? (
-            <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden relative">
-              <div
-                className="bg-blue-600 h-full transition-all duration-300"
-                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
-              />
-              <p className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-600">
-                Uploading {uploadProgress.current} / {uploadProgress.total}
-              </p>
+
+        {isImportExpanded && (
+          <div className="p-6 animate-in slide-in-from-top-2 duration-200">
+            {/* Mode Toggle */}
+            <div className="flex gap-4 mb-6 border-b pb-4">
+              <button
+                onClick={() => setImportMode('batch')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${importMode === 'batch' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                Batch Upload (Excel)
+              </button>
+              <button
+                onClick={() => setImportMode('single')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${importMode === 'single' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                Single Product Upload
+              </button>
             </div>
-          ) : (
-            <button
-              onClick={handleUpload}
-              disabled={isUploading}
-              className="w-full lg:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2"
-            >
-              <Upload size={20} /> Process Import
-            </button>
-          )}
-        </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Common Fields */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Company Name *</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="supplier-list"
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={companyName}
+                    onChange={e => setCompanyName(e.target.value)}
+                    placeholder="Select or type company..."
+                  />
+                  <datalist id="supplier-list">
+                    {suppliers.map(s => (
+                      <option key={s.id} value={s.name} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Batch Code</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border bg-gray-50 rounded-lg cursor-not-allowed"
+                  value={batchCode}
+                  readOnly
+                />
+              </div>
+
+              {/* Mode Specific Fields */}
+              {importMode === 'batch' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Excel File (.xlsx) *</label>
+                    <input
+                      type="file"
+                      accept=".xlsx,.csv"
+                      className="w-full text-sm"
+                      onChange={e => setExcelFile(e.target.files?.[0] || null)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Images (ZIP - Optional)</label>
+                    <input
+                      type="file"
+                      accept=".zip"
+                      className="w-full text-sm"
+                      onChange={e => setZipFile(e.target.files?.[0] || null)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Product Name *</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={singleProductName}
+                      onChange={e => setSingleProductName(e.target.value)}
+                      placeholder="e.g. Frozen Shrimp"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Product Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="w-full text-sm"
+                      onChange={e => setSingleProductImage(e.target.files?.[0] || null)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="mt-6">
+              {isUploading ? (
+                <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden relative">
+                  {uploadProgress ? (
+                    <>
+                      <div
+                        className="bg-blue-600 h-full transition-all duration-300"
+                        style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                      />
+                      <p className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                        Uploading {uploadProgress.current} / {uploadProgress.total}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="w-full h-full bg-blue-200 animate-pulse"></div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={importMode === 'batch' ? handleUpload : handleSingleUpload}
+                  disabled={isUploading}
+                  className="w-full lg:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Upload size={20} /> {importMode === 'batch' ? 'Process Batch Import' : 'Add Single Product'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Inventory List */}
