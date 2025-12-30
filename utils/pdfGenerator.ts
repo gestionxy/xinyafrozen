@@ -86,7 +86,7 @@ export const generatePDF = (orders: Record<string, OrderItem>, products: Product
   }
 };
 
-export const generateHistoryPDF = (session: HistorySession) => {
+try {
   const doc = new jsPDF();
 
   doc.setFillColor(15, 23, 42); // Slate-900
@@ -108,7 +108,7 @@ export const generateHistoryPDF = (session: HistorySession) => {
     `${o.quantity} ${o.unit}${o.quantity > 1 ? 's' : ''}`
   ]);
 
-  (doc as any).autoTable({
+  autoTable(doc, {
     startY: 50,
     head: [['Company', 'Product Name', 'Stock Info', 'Order Quantity']],
     body: tableData,
@@ -119,4 +119,8 @@ export const generateHistoryPDF = (session: HistorySession) => {
 
   const safeTimestamp = session.timestamp.replace(/[:/]/g, '-').replace(/,\s/g, '_');
   doc.save(`Order_Archive_${safeTimestamp}.pdf`);
+} catch (error) {
+  console.error("History PDF generation failed:", error);
+  alert("Failed to generate PDF. Please try again.");
+}
 };
