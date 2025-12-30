@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
-import { Upload, Search, Trash2, Edit, Save, X, PackagePlus, CheckCircle } from 'lucide-react';
+import { Upload, Search, Trash2, Edit, Save, X, PackagePlus, CheckCircle, Truck } from 'lucide-react';
 import { Product } from '../types';
 import { db } from '../services/mockStorage';
+import SupplierManager from './SupplierManager';
 
 const AdminDashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -176,6 +177,10 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+
+      {/* Supplier Management Section */}
+      <SupplierManager />
+
       {/* Upload Section */}
       <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <h2 className="text-xl font-bold mb-6 flex items-center gap-2">

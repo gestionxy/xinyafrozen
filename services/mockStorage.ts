@@ -1,5 +1,5 @@
 
-import { Product, OrderItem, HistorySession, SimpleOrder, SimpleOrderSession } from '../types';
+import { Product, OrderItem, HistorySession, SimpleOrder, SimpleOrderSession, Supplier } from '../types';
 import { supabase } from './supabaseClient';
 
 const STORAGE_KEYS = {
@@ -7,6 +7,46 @@ const STORAGE_KEYS = {
 };
 
 export const db = {
+  getSuppliers: async (): Promise<Supplier[]> => {
+    let { data, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching suppliers:', error);
+      // Fallback for demo/dev if table doesn't exist yet
+      return [];
+    }
+    return data || [];
+  },
+
+  addSupplier: async (name: string) => {
+    const { error } = await supabase
+      .from('suppliers')
+      .insert({ name });
+
+    if (error) throw error;
+  },
+
+  updateSupplier: async (id: string, name: string) => {
+    const { error } = await supabase
+      .from('suppliers')
+      .update({ name })
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  deleteSuppliers: async (ids: string[]) => {
+    const { error } = await supabase
+      .from('suppliers')
+      .delete()
+      .in('id', ids);
+
+    if (error) throw error;
+  },
+
   getAllProducts: async (): Promise<Product[]> => {
     const { data, error } = await supabase
       .from('products')

@@ -1,4 +1,10 @@
 
+export interface Supplier {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
 export interface Product {
   id: string;
   name: string;
