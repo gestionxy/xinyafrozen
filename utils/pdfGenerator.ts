@@ -86,4 +86,3 @@ export const generatePDF = (orders: Record<string, OrderItem>, products: Product
   }
 };
 
-}
