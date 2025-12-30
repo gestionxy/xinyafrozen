@@ -196,6 +196,28 @@ export const db = {
     return history;
   },
 
+  updateHistoryItem: async (itemId: string, updates: Partial<OrderItem>) => {
+    const { error } = await supabase
+      .from('order_items')
+      .update(updates)
+      .eq('id', itemId);
+    if (error) {
+      console.error('Error updating history item:', error);
+      throw error;
+    }
+  },
+
+  deleteHistoryItem: async (itemId: string) => {
+    const { error } = await supabase
+      .from('order_items')
+      .delete()
+      .eq('id', itemId);
+    if (error) {
+      console.error('Error deleting history item:', error);
+      throw error;
+    }
+  },
+
   // Simple Order Form Methods
   getSimpleSession: async (): Promise<SimpleOrderSession> => {
     // Try to find an active session (ended_at is null)
