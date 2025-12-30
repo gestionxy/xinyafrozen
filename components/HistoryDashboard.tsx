@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { HistorySession } from '../types';
 import { db } from '../services/mockStorage';
-import { FileDown, Calendar, ArrowRight, Package } from 'lucide-react';
+import { FileDown, Calendar, ArrowRight, Package, Download } from 'lucide-react';
 import { generateHistoryPDF } from '../utils/pdfGenerator';
+import { generateHistoryExcel } from '../utils/excelGenerator';
 
 const HistoryDashboard: React.FC = () => {
   const [sessions, setSessions] = useState<HistorySession[]>([]);
@@ -48,12 +49,20 @@ const HistoryDashboard: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={() => generateHistoryPDF(session)}
-              className="px-6 py-2 bg-gray-50 text-gray-700 font-bold rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all flex items-center gap-2"
-            >
-              Download PDF <ArrowRight size={18} />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => generateHistoryExcel(session)}
+                className="px-4 py-2 bg-green-50 text-green-700 font-bold rounded-xl hover:bg-green-600 hover:text-white transition-all flex items-center gap-2"
+              >
+                <Download size={18} /> Excel
+              </button>
+              <button
+                onClick={() => generateHistoryPDF(session)}
+                className="px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-xl hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
+              >
+                <FileDown size={18} /> PDF
+              </button>
+            </div>
           </div>
         ))}
       </div>

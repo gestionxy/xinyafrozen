@@ -117,5 +117,6 @@ export const generateHistoryPDF = (session: HistorySession) => {
     alternateRowStyles: { fillColor: [241, 245, 249] },
   });
 
-  doc.save(`Order_Archive_${session.timestamp}.pdf`);
+  const safeTimestamp = session.timestamp.replace(/[:/]/g, '-').replace(/,\s/g, '_');
+  doc.save(`Order_Archive_${safeTimestamp}.pdf`);
 };
