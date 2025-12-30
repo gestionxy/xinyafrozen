@@ -86,41 +86,4 @@ export const generatePDF = (orders: Record<string, OrderItem>, products: Product
   }
 };
 
-try {
-  const doc = new jsPDF();
-
-  doc.setFillColor(15, 23, 42); // Slate-900
-  doc.rect(0, 0, 210, 40, 'F');
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
-  doc.text("Xinya Logistics - Archived Order", 15, 20);
-
-  doc.setFontSize(10);
-  doc.text(`Cycle Timestamp: ${session.timestamp}`, 15, 30);
-  doc.text(`Session ID: ${session.id}`, 15, 35);
-
-  const tableData = session.orders.map(o => [
-    o.companyName,
-    o.productName,
-    o.stock || '-',
-    `${o.quantity} ${o.unit}${o.quantity > 1 ? 's' : ''}`
-  ]);
-
-  autoTable(doc, {
-    startY: 50,
-    head: [['Company', 'Product Name', 'Stock Info', 'Order Quantity']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255] },
-    alternateRowStyles: { fillColor: [241, 245, 249] },
-  });
-
-  const safeTimestamp = session.timestamp.replace(/[:/]/g, '-').replace(/,\s/g, '_');
-  doc.save(`Order_Archive_${safeTimestamp}.pdf`);
-} catch (error) {
-  console.error("History PDF generation failed:", error);
-  alert("Failed to generate PDF. Please try again.");
-}
 }
