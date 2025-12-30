@@ -123,4 +123,4 @@ try {
   console.error("History PDF generation failed:", error);
   alert("Failed to generate PDF. Please try again.");
 }
-};
+}

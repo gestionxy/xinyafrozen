@@ -5,7 +5,7 @@ import SimpleOrderForm from './components/SimpleOrderForm';
 import SimpleOrderAdmin from './components/SimpleOrderAdmin';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
-import HistoryDashboardV2 from './components/HistoryDashboardV2';
+import HistoryDashboard from './components/HistoryDashboard';
 import LandingPage from './components/LandingPage';
 import { Package, ShieldCheck, History, LogOut, ClipboardList, Home } from 'lucide-react';
 
@@ -102,7 +102,7 @@ const App: React.FC = () => {
             <div className="bg-blue-600 p-2 rounded-lg">
               <Package className="text-white" size={24} />
             </div>
-            <h1 className="text-xl font-bold text-gray-800 tracking-tight">Xinya Frozen Logistics (Updated)</h1>
+            <h1 className="text-xl font-bold text-gray-800 tracking-tight">Xinya Frozen Logistics</h1>
           </div>
 
           <nav className="hidden md:flex items-center space-x-2">
@@ -165,7 +165,7 @@ const App: React.FC = () => {
 
         {view === ViewMode.USER && <UserDashboard onExit={() => setView(ViewMode.LANDING)} />}
         {view === ViewMode.ADMIN && isAdmin && <AdminDashboard />}
-        {view === ViewMode.HISTORY && <HistoryDashboardV2 />}
+        {view === ViewMode.HISTORY && <HistoryDashboard />}
       </main>
 
       {/* Footer */}
