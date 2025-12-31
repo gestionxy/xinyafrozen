@@ -7,7 +7,7 @@ import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import HistoryDashboard from './components/HistoryDashboard';
 import LandingPage from './components/LandingPage';
-import { Package, ShieldCheck, History, LogOut, ClipboardList, Home } from 'lucide-react';
+import { Package, ShieldCheck, History, LogOut, ClipboardList, Home, Menu, X } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>(ViewMode.LANDING);
@@ -21,9 +21,12 @@ const App: React.FC = () => {
   // History Edit State
   const [editingSession, setEditingSession] = useState<any>(null);
 
+  // Mobile Nav State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.user === 'admin' && loginForm.pass === 'xinya-888') {
+    if (loginForm.user === 'admin' && loginForm.pass === 'xinya888') {
       setIsAdmin(true);
       setView(ViewMode.ADMIN);
     } else {
@@ -33,7 +36,7 @@ const App: React.FC = () => {
 
   const handleSimpleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (simpleLoginForm.user === 'admin' && simpleLoginForm.pass === 'xinya-888') {
+    if (simpleLoginForm.user === 'admin' && simpleLoginForm.pass === 'xinya888') {
       setIsSimpleAdmin(true);
     } else {
       alert('Invalid credentials');
@@ -42,8 +45,16 @@ const App: React.FC = () => {
 
   const NavButton = ({ targetView, icon: Icon, label }: { targetView: ViewMode, icon: any, label: string }) => (
     <button
-      onClick={() => setView(targetView)}
-      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${view === targetView ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+      onClick={() => {
+        setView(targetView);
+        if (targetView !== ViewMode.USER && targetView !== ViewMode.HISTORY) {
+          setEditingSession(null);
+        }
+        setIsMobileMenuOpen(false);
+      }}
+      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${view === targetView
+          ? 'bg-blue-100 text-blue-700 font-bold'
+          : 'text-gray-600 hover:bg-gray-100'
         }`}
     >
       <Icon size={20} />
@@ -104,7 +115,10 @@ const App: React.FC = () => {
           <div className="flex items-center justify-between">
             <div
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setView(ViewMode.LANDING)}
+              onClick={() => {
+                setView(ViewMode.LANDING);
+                setIsMobileMenuOpen(false);
+              }}
             >
               <div className="bg-blue-600 p-2 rounded-lg">
                 <Package className="text-white" size={24} />
@@ -112,14 +126,35 @@ const App: React.FC = () => {
               <h1 className="text-xl font-bold text-gray-800 tracking-tight">Xinya Frozen Logistics</h1>
             </div>
 
+            {/* Desktop Nav */}
             <nav className="hidden md:flex items-center space-x-2">
               <NavButton targetView={ViewMode.LANDING} icon={Home} label="Home" />
               <NavButton targetView={ViewMode.USER} icon={Package} label="Order Catalog" />
               <NavButton targetView={ViewMode.HISTORY} icon={History} label="History" />
               <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />
             </nav>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Nav Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t bg-white animate-in slide-in-from-top-2 duration-200">
+            <div className="px-4 py-4 space-y-2 flex flex-col">
+              <NavButton targetView={ViewMode.LANDING} icon={Home} label="Home" />
+              <NavButton targetView={ViewMode.USER} icon={Package} label="Order Catalog" />
+              <NavButton targetView={ViewMode.HISTORY} icon={History} label="History" />
+              <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
