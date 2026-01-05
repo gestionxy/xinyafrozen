@@ -113,7 +113,16 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
     if (editingSession) {
       // Update existing session
       try {
-        await db.updateSessionOrders(editingSession.id, Object.values(orders));
+        const enrichedItems = Object.values(orders).map((order: OrderItem) => {
+          const product = products.find(p => p.id === order.productId);
+          return {
+            ...order,
+            productName: product?.name || 'Unknown',
+            companyName: product?.company_name || 'Unknown',
+            imageUrl: product?.image_url || null
+          };
+        });
+        await db.updateSessionOrders(editingSession.id, enrichedItems);
         alert("Order session updated successfully!");
         if (onEditComplete) onEditComplete();
       } catch (e) {

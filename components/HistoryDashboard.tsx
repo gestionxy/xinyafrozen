@@ -138,7 +138,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
         {sessions.map(session => {
           // Sort orders: Company Name -> Product Name
           const sortedOrders = [...session.orders].sort((a, b) =>
-            a.companyName.localeCompare(b.companyName) || a.productName.localeCompare(b.productName)
+            (a.companyName || '').localeCompare(b.companyName || '') || (a.productName || '').localeCompare(b.productName || '')
           );
 
           return (
