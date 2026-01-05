@@ -207,6 +207,14 @@ export const db = {
       return [];
     }
 
+    // Fetch all products to restore missing/corrupted data
+    const { data: products } = await supabase
+      .from('products')
+      .select('*');
+
+    // Create a lookup map for faster access
+    const productMap = new Map(products?.map(p => [p.id, p]) || []);
+
     const history: HistorySession[] = [];
 
     for (const session of sessions) {
@@ -229,16 +237,24 @@ export const db = {
           const ss = String(date.getSeconds()).padStart(2, '0');
           return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
         })(),
-        orders: items.map(item => ({
-          id: item.id,
-          productId: item.product_id,
-          stock: item.stock,
-          quantity: Number(item.quantity),
-          unit: item.unit,
-          productName: item.product_name,
-          companyName: item.company_name,
-          imageUrl: item.image_url
-        }))
+        orders: items.map(item => {
+          // Auto-repair logic: If corrupted (Unknown/null), look up from products table
+          const product = productMap.get(item.product_id);
+          const productName = (item.product_name && item.product_name !== 'Unknown') ? item.product_name : (product?.name || 'Unknown Product');
+          const companyName = (item.company_name && item.company_name !== 'Unknown') ? item.company_name : (product?.company_name || 'Unknown Company');
+          const imageUrl = item.image_url || product?.image_url || null;
+
+          return {
+            id: item.id,
+            productId: item.product_id,
+            stock: item.stock,
+            quantity: Number(item.quantity),
+            unit: item.unit,
+            productName,
+            companyName,
+            imageUrl
+          };
+        })
       });
     }
 
