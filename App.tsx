@@ -26,7 +26,7 @@ const App: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.user === 'admin' && loginForm.pass === 'xinya888') {
+    if (loginForm.user === 'admin' && loginForm.pass === 'xinya-888') {
       setIsAdmin(true);
       setView(ViewMode.ADMIN);
     } else {
@@ -36,7 +36,7 @@ const App: React.FC = () => {
 
   const handleSimpleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (simpleLoginForm.user === 'admin' && simpleLoginForm.pass === 'xinya888') {
+    if (simpleLoginForm.user === 'admin' && simpleLoginForm.pass === 'xinya-888') {
       setIsSimpleAdmin(true);
     } else {
       alert('Invalid credentials');
@@ -53,8 +53,8 @@ const App: React.FC = () => {
         setIsMobileMenuOpen(false);
       }}
       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${view === targetView
-          ? 'bg-blue-100 text-blue-700 font-bold'
-          : 'text-gray-600 hover:bg-gray-100'
+        ? 'bg-blue-100 text-blue-700 font-bold'
+        : 'text-gray-600 hover:bg-gray-100'
         }`}
     >
       <Icon size={20} />
