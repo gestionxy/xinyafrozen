@@ -237,6 +237,7 @@ export const db = {
           const ss = String(date.getSeconds()).padStart(2, '0');
           return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
         })(),
+        name: session.name, // Map the name field
         orders: items.map(item => {
           // Auto-repair logic: If corrupted (Unknown/null), look up from products table
           const product = productMap.get(item.product_id);
@@ -259,6 +260,18 @@ export const db = {
     }
 
     return history;
+  },
+
+  updateSessionName: async (sessionId: string, name: string) => {
+    const { error } = await supabase
+      .from('order_sessions')
+      .update({ name })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Error updating session name:', error);
+      throw error;
+    }
   },
 
   updateHistoryItem: async (itemId: string, updates: Partial<OrderItem>) => {

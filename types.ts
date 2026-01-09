@@ -27,6 +27,7 @@ export interface OrderItem {
 export interface HistorySession {
   id: string;
   timestamp: string;
+  name?: string;
   orders: (OrderItem & { productName: string; companyName: string; imageUrl: string | null })[];
 }
 
