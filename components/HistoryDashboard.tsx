@@ -70,6 +70,13 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
       return;
     }
 
+    // Enforce Company Name selection from list
+    const isValidSupplier = suppliers.some(s => s.name === newItem.companyName);
+    if (!isValidSupplier) {
+      alert("Please select a valid company from the list. / 请从列表中选择有效的供应商。");
+      return;
+    }
+
     try {
       await db.addHistoryItem(activeSessionId, {
         ...newItem,
