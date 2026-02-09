@@ -463,7 +463,7 @@ export const db = {
   getStockData: async (): Promise<StockData> => {
     // Fetch all needed data in parallel
     const [itemsRes, colsRes, valsRes] = await Promise.all([
-      supabase.from('stock_items').select('*'),
+      supabase.from('stock_items').select('*').order('created_at', { ascending: true }),
       supabase.from('stock_columns').select('*').order('created_at', { ascending: true }),
       supabase.from('stock_values').select('*')
     ]);
