@@ -303,22 +303,22 @@ const StockDashboard: React.FC = () => {
                                         {/* ... Table Content ... */}
                                         <thead>
                                             <tr className="border-b bg-white">
-                                                <th className="px-6 py-3 font-semibold text-gray-600 w-1/4">Product Name</th>
+                                                <th className="px-6 py-3 font-semibold text-gray-600 w-1/3 min-w-[200px]">Product Name</th>
                                                 {data.columns.map(col => (
-                                                    <th key={col} className="px-4 py-3 font-semibold text-gray-600 w-32 relative group">
-                                                        <div className="flex items-center gap-1">
+                                                    <th key={col} className="px-2 py-3 font-semibold text-gray-600 w-24 text-center relative group">
+                                                        <div className="flex items-center justify-center gap-1">
                                                             {col}
                                                             <button
                                                                 onClick={() => handleDeleteColumn(col)}
-                                                                className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+                                                                className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity absolute -right-1"
                                                                 title="Delete Column"
                                                             >
-                                                                <X size={14} />
+                                                                <X size={12} />
                                                             </button>
                                                         </div>
                                                     </th>
                                                 ))}
-                                                <th className="px-4 py-3 font-semibold text-gray-600 w-20 text-center">Action</th>
+                                                <th className="px-4 py-3 font-semibold text-gray-600 w-16 text-center">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
@@ -329,16 +329,16 @@ const StockDashboard: React.FC = () => {
                                                         {item.isManual && <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] rounded border border-yellow-200 uppercase tracking-wide">Manual</span>}
                                                     </td>
                                                     {data.columns.map(col => (
-                                                        <td key={col} className="px-4 py-2">
+                                                        <td key={col} className="px-2 py-2">
                                                             <input
                                                                 type="text"
-                                                                className="w-full px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 outline-none text-center transition-all bg-transparent focus:bg-white"
+                                                                className="w-full px-1 py-1 border border-transparent hover:border-gray-200 focus:border-blue-500 rounded outline-none text-center transition-all bg-transparent focus:bg-white font-mono text-gray-700"
                                                                 value={item.values[col] || ''}
                                                                 onChange={e => handleValueChange(item.id, col, e.target.value)}
                                                             />
                                                         </td>
                                                     ))}
-                                                    <td className="px-4 py-2 text-center">
+                                                    <td className="px-2 py-2 text-center">
                                                         {item.isManual && (
                                                             <button
                                                                 onClick={() => handleDeleteItem(item.id)}
