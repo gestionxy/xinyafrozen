@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HistorySession, OrderItem } from '../types';
+import { HistorySession, OrderItem, Supplier } from '../types';
 import { db } from '../services/mockStorage';
 import { FileDown, Calendar, ArrowRight, Package, Download, ChevronDown, ChevronUp, Trash2, Edit2, Save, X, Plus, Search } from 'lucide-react';
 import { generateHistoryExcel } from '../utils/excelGenerator';
@@ -10,6 +10,7 @@ interface HistoryDashboardProps {
 
 const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) => {
   const [sessions, setSessions] = useState<HistorySession[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<{ id: string; quantity: number | string; stock: string } | null>(null);
 
@@ -33,11 +34,21 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
 
   useEffect(() => {
     loadHistory();
+    loadSuppliers();
   }, []);
 
   const loadHistory = async () => {
     const history = await db.getHistory();
     setSessions(history);
+  };
+
+  const loadSuppliers = async () => {
+    try {
+      const data = await db.getSuppliers();
+      setSuppliers(data);
+    } catch (error) {
+      console.error("Failed to load suppliers", error);
+    }
   };
 
   const toggleExpand = (id: string) => {
@@ -382,10 +393,17 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
                     <input
+                      list="supplier-options"
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       value={newItem.companyName}
                       onChange={e => setNewItem({ ...newItem, companyName: e.target.value })}
+                      placeholder="Select or type company name"
                     />
+                    <datalist id="supplier-options">
+                      {suppliers.map(s => (
+                        <option key={s.id} value={s.name} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
