@@ -22,7 +22,69 @@ const StockDashboard: React.FC = () => {
         loadData();
     }, []);
 
-    // ... (loadData, handleRefresh, toggleCompany same as before) ...
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const saved = await db.getStockData();
+            setData(saved);
+        } catch (e) {
+            console.error(e);
+            alert("Failed to load stock data.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRefresh = async () => {
+        if (!confirm("This will import new products from order history. Existing data will be preserved. Continue?")) return;
+
+        setLoading(true);
+        try {
+            const history = await db.getHistory();
+            // Refresh current data first to ensure we have latest
+            const currentData = await db.getStockData();
+            const existingKeySet = new Set(currentData.items.map((i: StockItem) => `${i.companyName}::${i.productName}`));
+            const newItems: any[] = [];
+
+            history.forEach(session => {
+                session.orders.forEach(order => {
+                    const key = `${order.companyName}::${order.productName}`;
+                    if (!existingKeySet.has(key)) {
+                        existingKeySet.add(key);
+                        newItems.push({
+                            productName: order.productName || 'Unknown',
+                            companyName: order.companyName || 'Unknown',
+                            isManual: false
+                        });
+                    }
+                });
+            });
+
+            if (newItems.length > 0) {
+                await db.batchAddStockItems(newItems);
+                await loadData(); // Reload all data
+                alert(`Imported ${newItems.length} new products from history.`);
+            } else {
+                alert("No new products found in history.");
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Failed to refresh data.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleCompany = (company: string) => {
+        const next = new Set(expandedCompanies);
+        if (next.has(company)) {
+            next.delete(company);
+        } else {
+            next.add(company);
+        }
+        setExpandedCompanies(next);
+    };
 
     const handleAddColumn = async () => {
         if (!newColName) return;
@@ -40,7 +102,15 @@ const StockDashboard: React.FC = () => {
         }
     };
 
-    // ... (handleDeleteColumn same as before) ...
+    const handleDeleteColumn = async (col: string) => {
+        if (!confirm(`Delete column "${col}" and all its data?`)) return;
+        try {
+            await db.deleteStockColumn(col);
+            await loadData();
+        } catch (e) {
+            alert("Failed to delete column.");
+        }
+    };
 
     const handleAddManualProduct = async () => {
         if (!activeCompany || !newProdName) {
@@ -80,9 +150,70 @@ const StockDashboard: React.FC = () => {
         setIsColModalOpen(true);
     };
 
-    // ... (handleDeleteItem, handleDeleteCompany, handleValueChange same as before) ...
+    const handleDeleteItem = async (id: string) => {
+        if (!confirm("Delete this row?")) return;
+        try {
+            await db.deleteStockItem(id);
+            await loadData();
+        } catch (e) {
+            alert("Failed to delete item.");
+        }
+    };
 
-    // ... (Grouping logic same as before) ...
+    const handleDeleteCompany = async (e: React.MouseEvent, company: string) => {
+        e.stopPropagation();
+        const password = prompt("Please enter admin password to delete this company:");
+        if (password === 'xinya-888') {
+            if (confirm(`Are you sure you want to delete ALL items for "${company}"? This cannot be undone.`)) {
+                try {
+                    await db.deleteStockCompany(company);
+                    await loadData();
+                } catch (e) {
+                    alert("Failed to delete company.");
+                }
+            }
+        } else if (password !== null) {
+            alert("Incorrect password!");
+        }
+    };
+
+    const handleValueChange = async (itemId: string, col: string, val: string) => {
+        // Optimistic update
+        const nextItems = data.items.map(item => {
+            if (item.id === itemId) {
+                return { ...item, values: { ...item.values, [col]: val } };
+            }
+            return item;
+        });
+        setData({ ...data, items: nextItems });
+
+        // Debounce or just fire and forget for now? 
+        // For simplicity, fire and forget but handle error quietly?
+        try {
+            await db.updateStockValue(itemId, col, val);
+        } catch (e) {
+            console.error("Failed to save value", e);
+            // Revert on error? For now, just log.
+        }
+    };
+
+    // Grouping
+    const groupedItems: Record<string, StockItem[]> = {};
+    data.items.forEach(item => {
+        // Filter logic
+        if (searchTerm &&
+            !item.productName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !item.companyName.toLowerCase().includes(searchTerm.toLowerCase())) {
+            return;
+        }
+
+        if (!groupedItems[item.companyName]) {
+            groupedItems[item.companyName] = [];
+        }
+        groupedItems[item.companyName].push(item);
+    });
+
+    const sortedCompanies = Object.keys(groupedItems).sort();
 
     // ... (Return JSX) ...
     return (
