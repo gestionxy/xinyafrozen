@@ -142,12 +142,13 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
   };
 
 
-  const [selectedCompany, setSelectedCompany] = useState<string>('All');
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
 
   // Extract unique companies
   const companies = ['All', ...Array.from(new Set(products.map(p => p.company_name))).sort()];
 
   const filteredProducts = products.filter(p => {
+    if (!selectedCompany) return false; // Don't show anything if no company selected
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     if (selectedCompany === 'All') {
       return matchesSearch || p.company_name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -177,6 +178,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
               value={selectedCompany}
               onChange={e => setSelectedCompany(e.target.value)}
             >
+              <option value="" disabled>Select a company...</option>
               {companies.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -224,7 +226,15 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
       </div>
 
       {/* Grid */}
-      {filteredProducts.length > 0 ? (
+      {!selectedCompany ? (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400 animate-in fade-in">
+          <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 text-blue-500">
+            <Search size={48} />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Select a Supplier / 请选择供应商</h3>
+          <p className="text-gray-500">Please select a company from the dropdown above to view products.</p>
+        </div>
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {filteredProducts.map(p => {
             const order = orders[p.id];
