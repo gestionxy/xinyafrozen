@@ -539,6 +539,11 @@ export const db = {
       }))
     );
     if (error) throw error;
+  },
+
+  deleteStockCompany: async (companyName: string) => {
+    const { error } = await supabase.from('stock_items').delete().eq('company_name', companyName);
+    if (error) throw error;
   }
 };
 

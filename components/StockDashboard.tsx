@@ -144,6 +144,23 @@ const StockDashboard: React.FC = () => {
         }
     };
 
+    const handleDeleteCompany = async (e: React.MouseEvent, company: string) => {
+        e.stopPropagation();
+        const password = prompt("Please enter admin password to delete this company:");
+        if (password === 'xinya-888') {
+            if (confirm(`Are you sure you want to delete ALL items for "${company}"? This cannot be undone.`)) {
+                try {
+                    await db.deleteStockCompany(company);
+                    await loadData();
+                } catch (e) {
+                    alert("Failed to delete company.");
+                }
+            }
+        } else if (password !== null) {
+            alert("Incorrect password!");
+        }
+    };
+
     const handleValueChange = async (itemId: string, col: string, val: string) => {
         // Optimistic update
         const nextItems = data.items.map(item => {
@@ -246,6 +263,13 @@ const StockDashboard: React.FC = () => {
                                     <h3 className="text-lg font-bold text-gray-800">{company}</h3>
                                     <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-full font-mono">{groupedItems[company].length} items</span>
                                 </div>
+                                <button
+                                    onClick={(e) => handleDeleteCompany(e, company)}
+                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors z-10"
+                                    title="Delete Company / 删除该公司"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
                             </div>
 
                             {expandedCompanies.has(company) && (
