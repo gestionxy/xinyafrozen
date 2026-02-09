@@ -6,8 +6,9 @@ import SimpleOrderAdmin from './components/SimpleOrderAdmin';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import HistoryDashboard from './components/HistoryDashboard';
+import StockDashboard from './components/StockDashboard';
 import LandingPage from './components/LandingPage';
-import { Package, ShieldCheck, History, LogOut, ClipboardList, Home, Menu, X } from 'lucide-react';
+import { Package, ShieldCheck, History, LogOut, ClipboardList, Home, Menu, X, BarChart3 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>(ViewMode.LANDING);
@@ -131,6 +132,7 @@ const App: React.FC = () => {
               <NavButton targetView={ViewMode.LANDING} icon={Home} label="Home" />
               <NavButton targetView={ViewMode.USER} icon={Package} label="Order Catalog" />
               <NavButton targetView={ViewMode.HISTORY} icon={History} label="History" />
+              <NavButton targetView={ViewMode.STOCK} icon={BarChart3} label="Stock" />
               <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />
             </nav>
 
@@ -151,6 +153,7 @@ const App: React.FC = () => {
               <NavButton targetView={ViewMode.LANDING} icon={Home} label="Home" />
               <NavButton targetView={ViewMode.USER} icon={Package} label="Order Catalog" />
               <NavButton targetView={ViewMode.HISTORY} icon={History} label="History" />
+              <NavButton targetView={ViewMode.STOCK} icon={BarChart3} label="Stock" />
               <NavButton targetView={ViewMode.ADMIN} icon={ShieldCheck} label="Admin" />
             </div>
           </div>
@@ -252,6 +255,8 @@ const App: React.FC = () => {
             }}
           />
         )}
+
+        {view === ViewMode.STOCK && <StockDashboard />}
       </main>
 
       {/* Footer */}

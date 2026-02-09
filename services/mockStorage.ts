@@ -457,5 +457,100 @@ export const db = {
 
     if (error) return [];
     return data || [];
+  },
+
+  // Stock Management Methods (Supabase)
+  getStockData: async (): Promise<StockData> => {
+    // Fetch all needed data in parallel
+    const [itemsRes, colsRes, valsRes] = await Promise.all([
+      supabase.from('stock_items').select('*'),
+      supabase.from('stock_columns').select('*').order('created_at', { ascending: true }),
+      supabase.from('stock_values').select('*')
+    ]);
+
+    if (itemsRes.error) console.error('Error fetching stock items:', itemsRes.error);
+    if (colsRes.error) console.error('Error fetching stock columns:', colsRes.error);
+    if (valsRes.error) console.error('Error fetching stock values:', valsRes.error);
+
+    const items = itemsRes.data || [];
+    const columns = (colsRes.data || []).map((c: any) => c.name);
+    const values = valsRes.data || [];
+
+    // Map values to items
+    const stockItems: StockItem[] = items.map((item: any) => {
+      const itemValues: Record<string, string> = {};
+      values.filter((v: any) => v.item_id === item.id).forEach((v: any) => {
+        itemValues[v.column_name] = v.value;
+      });
+      return {
+        id: item.id,
+        productName: item.product_name,
+        companyName: item.company_name,
+        isManual: item.is_manual,
+        values: itemValues
+      };
+    });
+
+    return { columns, items: stockItems };
+  },
+
+  addStockItem: async (item: Omit<StockItem, 'id' | 'values'>) => {
+    const { data, error } = await supabase.from('stock_items').insert({
+      product_name: item.productName,
+      company_name: item.companyName,
+      is_manual: item.isManual
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  deleteStockItem: async (id: string) => {
+    const { error } = await supabase.from('stock_items').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  addStockColumn: async (name: string) => {
+    const { error } = await supabase.from('stock_columns').insert({ name });
+    if (error) throw error;
+  },
+
+  deleteStockColumn: async (name: string) => {
+    const { error } = await supabase.from('stock_columns').delete().eq('name', name);
+    if (error) throw error;
+  },
+
+  updateStockValue: async (itemId: string, colName: string, value: string) => {
+    const { error } = await supabase.from('stock_values').upsert({
+      item_id: itemId,
+      column_name: colName,
+      value: value,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'item_id,column_name' });
+    if (error) throw error;
+  },
+
+  batchAddStockItems: async (items: Omit<StockItem, 'id' | 'values'>[]) => {
+    if (items.length === 0) return;
+    const { error } = await supabase.from('stock_items').insert(
+      items.map(i => ({
+        product_name: i.productName,
+        company_name: i.companyName,
+        is_manual: i.isManual
+      }))
+    );
+    if (error) throw error;
   }
 };
+
+export interface StockItem {
+  id: string;
+  productName: string;
+  companyName: string;
+  isManual: boolean;
+  values: Record<string, string>; // cell values keyed by column name
+}
+
+export interface StockData {
+  columns: string[];
+  items: StockItem[];
+}
