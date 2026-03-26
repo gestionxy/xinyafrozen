@@ -13,6 +13,7 @@ interface UserDashboardProps {
 
 const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, onEditComplete }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [productOrderStats, setProductOrderStats] = useState<Record<string, number>>({});
   const [orders, setOrders] = useState<Record<string, OrderItem>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -25,10 +26,29 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
 
   useEffect(() => {
     const loadData = async () => {
-      const prods = await db.getAllProducts();
-      setProducts(prods.sort((a, b) =>
-        a.company_name.localeCompare(b.company_name) || a.name.localeCompare(b.name)
-      ));
+      const [prods, historySessions] = await Promise.all([
+        db.getAllProducts(),
+        db.getHistory()
+      ]);
+
+      const stats: Record<string, number> = {};
+      historySessions.forEach(session => {
+        session.orders.forEach(order => {
+          if (order.productId) {
+            stats[order.productId] = (stats[order.productId] || 0) + (order.quantity || 0);
+          }
+        });
+      });
+      setProductOrderStats(stats);
+
+      setProducts(prods.sort((a, b) => {
+        const countA = stats[a.id] || 0;
+        const countB = stats[b.id] || 0;
+        if (countA !== countB) {
+          return countB - countA;
+        }
+        return a.name.localeCompare(b.name, 'zh-CN');
+      }));
 
       if (editingSession) {
         // Initialize from session
@@ -261,7 +281,14 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-blue-600 uppercase tracking-tight truncate">{p.company_name}</p>
-                  <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">{p.name}</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">
+                    {p.name}
+                    {productOrderStats[p.id] > 0 && (
+                      <span className="ml-1 inline-flex items-center text-[10px] text-orange-500 bg-orange-50 px-1 py-0.5 rounded border border-orange-100 font-bold align-middle shadow-sm" title={`历史总订货量: ${productOrderStats[p.id]}`}>
+                        🔥 HOT
+                      </span>
+                    )}
+                  </h3>
                   {order && (
                     <div className="mt-2 text-sm font-bold text-red-600 animate-in fade-in slide-in-from-bottom-2">
                       +{order.quantity} {order.unit}{order.quantity > 1 ? 's' : ''}
