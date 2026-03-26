@@ -21,8 +21,8 @@ export const generateHistoryExcel = (session: HistorySession) => {
             'Product Name': o.productName,
             'Company': o.companyName,
             'Quantity': `${o.quantity} ${o.unit}`,
+            'Unit Price': o.unitPrice ? `$${Number(o.unitPrice).toFixed(2)}` : '-',
             'Stock Info': o.stock || '-',
-            // 'Image URL': o.imageUrl || '-' // Optional: include if needed, but user asked for "everything except images" which implies summary data
         }));
 
         const ws = XLSX.utils.json_to_sheet(data);

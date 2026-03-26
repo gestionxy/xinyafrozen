@@ -12,7 +12,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
   const [sessions, setSessions] = useState<HistorySession[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
-  const [editingItem, setEditingItem] = useState<{ id: string; quantity: number | string; stock: string } | null>(null);
+  const [editingItem, setEditingItem] = useState<{ id: string; quantity: number | string; stock: string; unitPrice: number | string } | null>(null);
 
   // Add Item Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -25,7 +25,8 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
     companyName: '',
     stock: '',
     quantity: '',
-    unit: 'case'
+    unit: 'case',
+    unitPrice: ''
   });
 
   // Rename Session State
@@ -60,7 +61,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
     e.stopPropagation();
     setActiveSessionId(sessionId);
     setAddMode('selection');
-    setNewItem({ productName: '', companyName: '', stock: '', quantity: '', unit: 'case' });
+    setNewItem({ productName: '', companyName: '', stock: '', quantity: '', unit: 'case', unitPrice: '' });
     setIsAddModalOpen(true);
   };
 
@@ -80,7 +81,8 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
     try {
       await db.addHistoryItem(activeSessionId, {
         ...newItem,
-        quantity: Number(newItem.quantity)
+        quantity: Number(newItem.quantity),
+        unitPrice: newItem.unitPrice ? Number(newItem.unitPrice) : undefined
       });
       setIsAddModalOpen(false);
       await loadHistory();
@@ -120,7 +122,8 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
     setEditingItem({
       id: item.id,
       quantity: item.quantity,
-      stock: item.stock || ''
+      stock: item.stock || '',
+      unitPrice: item.unitPrice || ''
     });
   };
 
@@ -130,7 +133,8 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
     try {
       await db.updateHistoryItem(editingItem.id, {
         quantity: Number(editingItem.quantity),
-        stock: editingItem.stock
+        stock: editingItem.stock,
+        unitPrice: editingItem.unitPrice ? Number(editingItem.unitPrice) : undefined
       });
       setEditingItem(null);
       await loadHistory();
@@ -275,6 +279,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                           <th className="px-6 py-3">Company</th>
                           <th className="px-6 py-3 w-32">Stock Info</th>
                           <th className="px-6 py-3 w-32">Quantity</th>
+                          <th className="px-6 py-3 w-32">Unit Price (单价)</th>
                           <th className="px-6 py-3 w-24 text-center">Actions</th>
                         </tr>
                       </thead>
@@ -318,6 +323,25 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                                 </div>
                               ) : (
                                 <span className="font-bold text-blue-600">{order.quantity} {order.unit}</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              {editingItem?.id === order.id ? (
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1.5 text-gray-400">$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    className="w-full pl-6 pr-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                    value={editingItem.unitPrice}
+                                    onChange={e => setEditingItem({ ...editingItem, unitPrice: e.target.value })}
+                                    placeholder="0.00"
+                                  />
+                                </div>
+                              ) : (
+                                <span className="text-gray-600 font-medium">
+                                  {order.unitPrice ? `$${Number(order.unitPrice).toFixed(2)}` : '-'}
+                                </span>
                               )}
                             </td>
                             <td className="px-6 py-4 flex justify-center gap-2">
@@ -446,6 +470,20 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                           <option value="case">Case</option>
                           <option value="piece">Pcs</option>
                         </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (单价)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-gray-400">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          value={newItem.unitPrice}
+                          onChange={e => setNewItem({ ...newItem, unitPrice: e.target.value })}
+                          placeholder="0.00"
+                        />
                       </div>
                     </div>
                   </div>

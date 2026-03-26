@@ -22,6 +22,7 @@ export interface OrderItem {
   stock: string;
   quantity: number;
   unit: OrderUnit;
+  unitPrice?: number;
 }
 
 export interface HistorySession {

@@ -180,6 +180,7 @@ export const db = {
         quantity: order.quantity,
         unit: order.unit,
         stock: order.stock,
+        unit_price: order.unitPrice || null,
         created_at: now.toISOString()
       };
     });
@@ -251,6 +252,7 @@ export const db = {
             stock: item.stock,
             quantity: Number(item.quantity),
             unit: item.unit,
+            unitPrice: item.unit_price ? Number(item.unit_price) : undefined,
             productName,
             companyName,
             imageUrl
@@ -275,9 +277,14 @@ export const db = {
   },
 
   updateHistoryItem: async (itemId: string, updates: Partial<OrderItem>) => {
+    const dbUpdates: any = { ...updates };
+    if ('unitPrice' in dbUpdates) {
+      dbUpdates.unit_price = dbUpdates.unitPrice;
+      delete dbUpdates.unitPrice;
+    }
     const { error } = await supabase
       .from('order_items')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', itemId);
     if (error) {
       console.error('Error updating history item:', error);
@@ -331,6 +338,7 @@ export const db = {
         stock: item.stock,
         quantity: item.quantity,
         unit: item.unit || 'case',
+        unit_price: item.unitPrice || null,
         product_id: item.productId || null, // Allow null for manual items
         // image_url might be missing for manual items
         created_at: new Date().toISOString()
@@ -364,6 +372,7 @@ export const db = {
       stock: item.stock,
       quantity: item.quantity,
       unit: item.unit || 'case',
+      unit_price: item.unitPrice || item.unit_price,
       created_at: new Date().toISOString()
     }));
 
