@@ -282,12 +282,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-blue-600 uppercase tracking-tight truncate">{p.company_name}</p>
                   <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem]">
-                    {p.name}
                     {productOrderStats[p.id] > 0 && (
-                      <span className="ml-1 inline-flex items-center text-[10px] text-orange-500 bg-orange-50 px-1 py-0.5 rounded border border-orange-100 font-bold align-middle shadow-sm" title={`历史总订货量: ${productOrderStats[p.id]}`}>
+                      <span className="mr-1.5 inline-flex items-center text-[10px] text-orange-500 bg-orange-50 px-1 py-0.5 rounded border border-orange-100 font-bold align-middle shadow-sm" title={`历史总订货量: ${productOrderStats[p.id]}`}>
                         🔥 HOT
                       </span>
                     )}
+                    {p.name}
                   </h3>
                   {order && (
                     <div className="mt-2 text-sm font-bold text-red-600 animate-in fade-in slide-in-from-bottom-2">
