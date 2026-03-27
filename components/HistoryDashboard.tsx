@@ -315,7 +315,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                                 <div className="flex items-center gap-1">
                                   <input
                                     type="number"
-                                    className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     value={editingItem.quantity}
                                     onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value })}
                                   />
@@ -332,7 +332,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                                   <input
                                     type="number"
                                     step="0.01"
-                                    className="w-full pl-6 pr-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full pl-6 pr-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     value={editingItem.unitPrice}
                                     onChange={e => setEditingItem({ ...editingItem, unitPrice: e.target.value })}
                                     placeholder="0.00"
@@ -458,7 +458,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                       <div className="flex">
                         <input
                           type="number"
-                          className="w-full px-3 py-2 border rounded-l-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-3 py-2 border rounded-l-lg focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           value={newItem.quantity}
                           onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
                         />
@@ -479,7 +479,7 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                         <input
                           type="number"
                           step="0.01"
-                          className="w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           value={newItem.unitPrice}
                           onChange={e => setNewItem({ ...newItem, unitPrice: e.target.value })}
                           placeholder="0.00"
