@@ -198,6 +198,7 @@ export const db = {
   },
 
   getHistory: async (): Promise<HistorySession[]> => {
+    // 1. Fetch sessions
     const { data: sessions, error: sessionsError } = await supabase
       .from('order_sessions')
       .select('*')
@@ -208,7 +209,7 @@ export const db = {
       return [];
     }
 
-    // Fetch all products to restore missing/corrupted data
+    // 2. Fetch all products to restore missing/corrupted data
     const { data: products } = await supabase
       .from('products')
       .select('*');
@@ -216,15 +217,26 @@ export const db = {
     // Create a lookup map for faster access
     const productMap = new Map(products?.map(p => [p.id, p]) || []);
 
+    // 3. Fetch all order items in ONE query to avoid N+1 problem taking tens of seconds
+    const { data: allItems, error: itemsError } = await supabase
+      .from('order_items')
+      .select('*');
+
+    // Group items by session ID
+    const itemsBySession = new Map<string, any[]>();
+    if (!itemsError && allItems) {
+      for (const item of allItems) {
+        if (!itemsBySession.has(item.session_id)) {
+          itemsBySession.set(item.session_id, []);
+        }
+        itemsBySession.get(item.session_id)!.push(item);
+      }
+    }
+
     const history: HistorySession[] = [];
 
     for (const session of sessions) {
-      const { data: items, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('session_id', session.id);
-
-      if (itemsError) continue;
+      const items = itemsBySession.get(session.id) || [];
 
       history.push({
         id: session.id,
