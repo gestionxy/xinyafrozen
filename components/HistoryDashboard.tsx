@@ -314,10 +314,11 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                               {editingItem?.id === order.id ? (
                                 <div className="flex items-center gap-1">
                                   <input
-                                    type="number"
-                                    className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    type="text"
+                                    inputMode="decimal"
+                                    className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                     value={editingItem.quantity}
-                                    onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value })}
+                                    onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value.replace(/[^0-9.]/g, '') })}
                                   />
                                   <span className="text-gray-400 text-xs">{order.unit}</span>
                                 </div>
@@ -330,11 +331,11 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                                 <div className="relative">
                                   <span className="absolute left-2 top-1.5 text-gray-400">$</span>
                                   <input
-                                    type="number"
-                                    step="0.01"
-                                    className="w-full pl-6 pr-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    type="text"
+                                    inputMode="decimal"
+                                    className="w-full pl-6 pr-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                     value={editingItem.unitPrice}
-                                    onChange={e => setEditingItem({ ...editingItem, unitPrice: e.target.value })}
+                                    onChange={e => setEditingItem({ ...editingItem, unitPrice: e.target.value.replace(/[^0-9.]/g, '') })}
                                     placeholder="0.00"
                                   />
                                 </div>
@@ -457,10 +458,11 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
                       <div className="flex">
                         <input
-                          type="number"
-                          className="w-full px-3 py-2 border rounded-l-lg focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          type="text"
+                          inputMode="decimal"
+                          className="w-full px-3 py-2 border rounded-l-lg focus:ring-2 focus:ring-blue-500 outline-none"
                           value={newItem.quantity}
-                          onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
+                          onChange={e => setNewItem({ ...newItem, quantity: e.target.value.replace(/[^0-9.]/g, '') })}
                         />
                         <select
                           className="bg-gray-50 border border-l-0 rounded-r-lg px-2 text-sm"
@@ -477,11 +479,11 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
                       <div className="relative">
                         <span className="absolute left-3 top-2 text-gray-400">$</span>
                         <input
-                          type="number"
-                          step="0.01"
-                          className="w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          type="text"
+                          inputMode="decimal"
+                          className="w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                           value={newItem.unitPrice}
-                          onChange={e => setNewItem({ ...newItem, unitPrice: e.target.value })}
+                          onChange={e => setNewItem({ ...newItem, unitPrice: e.target.value.replace(/[^0-9.]/g, '') })}
                           placeholder="0.00"
                         />
                       </div>
