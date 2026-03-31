@@ -15,7 +15,9 @@ const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Import UI State
+  // Edit State
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editingProductName, setEditingProductName] = useState('');
   const [isImportExpanded, setIsImportExpanded] = useState(false);
   const [importMode, setImportMode] = useState<'batch' | 'single'>('batch');
 
@@ -451,23 +453,90 @@ const AdminDashboard: React.FC = () => {
                       <div className="w-12 h-12 bg-gray-100 flex items-center justify-center rounded-lg border text-gray-400 text-[10px] text-center p-1">No Image</div>
                     )}
                   </td>
-                  <td className="px-6 py-4 font-medium">{p.name}</td>
+                  <td className="px-6 py-4 font-medium">
+                    {editingProductId === p.id ? (
+                      <input
+                        type="text"
+                        className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 outline-none font-normal"
+                        value={editingProductName}
+                        onChange={e => setEditingProductName(e.target.value)}
+                        autoFocus
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter') {
+                            if (editingProductName.trim() === '') return;
+                            try {
+                              await db.updateProduct(p.id, editingProductName.trim());
+                              setEditingProductId(null);
+                              await refreshProducts();
+                            } catch (error) {
+                              alert('Failed to update product name');
+                            }
+                          } else if (e.key === 'Escape') {
+                            setEditingProductId(null);
+                          }
+                        }}
+                      />
+                    ) : (
+                      p.name
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-gray-600">{p.company_name}</td>
                   <td className="px-6 py-4">
                     <span className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-600">#{p.batch_code}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={async () => {
-                        if (confirm('Delete this product?')) {
-                          await db.deleteProducts([p.id]);
-                          await refreshProducts();
-                        }
-                      }}
-                      className="text-gray-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    {editingProductId === p.id ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={async () => {
+                            if (editingProductName.trim() === '') return;
+                            try {
+                              await db.updateProduct(p.id, editingProductName.trim());
+                              setEditingProductId(null);
+                              await refreshProducts();
+                            } catch (e) {
+                              alert('Failed to update product name');
+                            }
+                          }}
+                          className="text-green-600 hover:text-green-800 transition-colors"
+                          title="Save"
+                        >
+                          <Save size={18} />
+                        </button>
+                        <button
+                          onClick={() => setEditingProductId(null)}
+                          className="text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Cancel"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => {
+                            setEditingProductId(p.id);
+                            setEditingProductName(p.name);
+                          }}
+                          className="text-gray-400 hover:text-blue-600 transition-colors"
+                          title="Edit Product Name"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm('Delete this product?')) {
+                              await db.deleteProducts([p.id]);
+                              await refreshProducts();
+                            }
+                          }}
+                          className="text-gray-400 hover:text-red-600 transition-colors"
+                          title="Delete Product"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

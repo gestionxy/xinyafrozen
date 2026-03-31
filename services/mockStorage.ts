@@ -122,6 +122,18 @@ export const db = {
     }
   },
 
+  updateProduct: async (id: string, name: string) => {
+    const { error } = await supabase
+      .from('products')
+      .update({ name })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  },
+
   getLastBatchCode: async (): Promise<string> => {
     const { data, error } = await supabase
       .from('products')
