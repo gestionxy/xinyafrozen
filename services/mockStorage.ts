@@ -93,10 +93,13 @@ export const db = {
 
     for (let i = 0; i < total; i += BATCH_SIZE) {
       const batch = ids.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('products')
         .delete()
-        .in('id', batch);
+        .in('id', batch)
+        .select();
+
+      console.log('Delete response:', { data, error, batch });
 
       if (error) {
         console.error(`Error deleting batch starting at index ${i}:`, error);

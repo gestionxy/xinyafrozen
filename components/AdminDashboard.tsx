@@ -526,8 +526,13 @@ const AdminDashboard: React.FC = () => {
                         <button
                           onClick={async () => {
                             if (confirm('Delete this product?')) {
-                              await db.deleteProducts([p.id]);
-                              await refreshProducts();
+                              try {
+                                await db.deleteProducts([p.id]);
+                                await refreshProducts();
+                              } catch (err: any) {
+                                alert('Error deleting product: ' + (err.message || String(err)));
+                                console.error('Delete error:', err);
+                              }
                             }
                           }}
                           className="text-gray-400 hover:text-red-600 transition-colors"
