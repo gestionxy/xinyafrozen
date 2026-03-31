@@ -182,6 +182,9 @@ create table if not exists public.order_items (
 alter table public.order_items enable row level security;
 create policy "Enable all access for all users" on public.order_items for all using (true) with check (true);
 
+-- (修复/解绑) 强制移除 product_id 可能存在的外键约束，确保产品被删除时历史订单不受影响
+ALTER TABLE public.order_items DROP CONSTRAINT IF EXISTS order_items_product_id_fkey;
+
 -- ==========================================
 -- 9. 简易采购订单表 (Simple Order Admin)
 -- ==========================================
