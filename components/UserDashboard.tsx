@@ -15,6 +15,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
   const [products, setProducts] = useState<Product[]>([]);
   const [productOrderStats, setProductOrderStats] = useState<Record<string, number>>({});
   const [orders, setOrders] = useState<Record<string, OrderItem>>({});
+  const [manualOrders, setManualOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showCart, setShowCart] = useState(false);
@@ -53,6 +54,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
       if (editingSession) {
         // Initialize from session
         const initialOrders: Record<string, OrderItem> = {};
+        const manuals: any[] = [];
         editingSession.orders.forEach((o: any) => {
           if (o.productId) {
             initialOrders[o.productId] = {
@@ -62,11 +64,15 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
               quantity: o.quantity,
               unit: o.unit
             };
+          } else {
+            manuals.push(o);
           }
         });
         setOrders(initialOrders);
+        setManualOrders(manuals);
       } else {
         setOrders(db.getCurrentOrders());
+        setManualOrders([]);
       }
     };
     loadData();
@@ -142,7 +148,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
             imageUrl: product?.image_url || null
           };
         });
-        await db.updateSessionOrders(editingSession.id, enrichedItems);
+        
+        const allSessionItems = [...enrichedItems, ...manualOrders];
+        
+        await db.updateSessionOrders(editingSession.id, allSessionItems);
         alert("Order session updated successfully!");
         if (onEditComplete) onEditComplete();
       } catch (e) {
