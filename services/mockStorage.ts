@@ -48,16 +48,30 @@ export const db = {
   },
 
   getAllProducts: async (): Promise<Product[]> => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let allProducts: Product[] = [];
+    let from = 0;
+    const step = 1000;
 
-    if (error) {
-      console.error('Error fetching products:', error);
-      return [];
+    while (true) {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + step - 1);
+
+      if (error) {
+        console.error('Error fetching products:', error);
+        return [];
+      }
+      if (data && data.length > 0) {
+        allProducts = allProducts.concat(data);
+      }
+      if (!data || data.length < step) {
+        break;
+      }
+      from += step;
     }
-    return data || [];
+    return allProducts;
   },
 
   addProducts: async (newProducts: Product[], onProgress?: (current: number, total: number) => void) => {
@@ -225,21 +239,39 @@ export const db = {
     }
 
     // 2. Fetch all products to restore missing/corrupted data
-    const { data: products } = await supabase
-      .from('products')
-      .select('*');
+    let products: any[] = [];
+    let pFrom = 0;
+    const pStep = 1000;
+    while (true) {
+      const { data, error } = await supabase.from('products').select('*').range(pFrom, pFrom + pStep - 1);
+      if (data) products = products.concat(data);
+      if (error || !data || data.length < pStep) break;
+      pFrom += pStep;
+    }
 
     // Create a lookup map for faster access
-    const productMap = new Map(products?.map(p => [p.id, p]) || []);
+    const productMap = new Map(products.map(p => [p.id, p]));
 
-    // 3. Fetch all order items in ONE query to avoid N+1 problem taking tens of seconds
-    const { data: allItems, error: itemsError } = await supabase
-      .from('order_items')
-      .select('*');
+    // 3. Fetch all order items in chunks to avoid 1000-row limit
+    let allItems: any[] = [];
+    let itemsError = null;
+    let iFrom = 0;
+    const iStep = 1000;
+    
+    while (true) {
+      const { data, error } = await supabase.from('order_items').select('*').range(iFrom, iFrom + iStep - 1);
+      if (error) {
+        itemsError = error;
+        break;
+      }
+      if (data) allItems = allItems.concat(data);
+      if (!data || data.length < iStep) break;
+      iFrom += iStep;
+    }
 
     // Group items by session ID
     const itemsBySession = new Map<string, any[]>();
-    if (!itemsError && allItems) {
+    if (!itemsError && allItems.length > 0) {
       for (const item of allItems) {
         if (!itemsBySession.has(item.session_id)) {
           itemsBySession.set(item.session_id, []);
@@ -497,20 +529,31 @@ export const db = {
 
   // Stock Management Methods (Supabase)
   getStockData: async (): Promise<StockData> => {
+    // Helper to fetch all records handling 1000 row limits
+    const fetchAll = async (table: string, orderCol?: string) => {
+      let results: any[] = [];
+      let from = 0;
+      const step = 1000;
+      while (true) {
+        let query = supabase.from(table).select('*').range(from, from + step - 1);
+        if (orderCol) query = query.order(orderCol, { ascending: true });
+        const { data, error } = await query;
+        if (error) console.error(`Error fetching ${table}:`, error);
+        if (data) results = results.concat(data);
+        if (error || !data || data.length < step) break;
+        from += step;
+      }
+      return results;
+    };
+
     // Fetch all needed data in parallel
-    const [itemsRes, colsRes, valsRes] = await Promise.all([
-      supabase.from('stock_items').select('*').order('created_at', { ascending: true }),
-      supabase.from('stock_columns').select('*').order('created_at', { ascending: true }),
-      supabase.from('stock_values').select('*')
+    const [items, columnsRaw, values] = await Promise.all([
+      fetchAll('stock_items', 'created_at'),
+      fetchAll('stock_columns', 'created_at'),
+      fetchAll('stock_values')
     ]);
 
-    if (itemsRes.error) console.error('Error fetching stock items:', itemsRes.error);
-    if (colsRes.error) console.error('Error fetching stock columns:', colsRes.error);
-    if (valsRes.error) console.error('Error fetching stock values:', valsRes.error);
-
-    const items = itemsRes.data || [];
-    const columns = (colsRes.data || []).map((c: any) => c.name);
-    const values = valsRes.data || [];
+    const columns = columnsRaw.map((c: any) => c.name);
 
     // Map values to items
     const stockItems: StockItem[] = items.map((item: any) => {
