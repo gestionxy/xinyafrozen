@@ -269,6 +269,12 @@ const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ onEditSession }) =>
               {/* Expanded Details */}
               {expandedSessionId === session.id && (
                 <div className="border-t border-gray-100 bg-white animate-in slide-in-from-top-2 duration-300">
+                  <div className="px-6 py-4 bg-blue-50/30 border-b border-gray-100 flex justify-between items-center">
+                    <span className="text-gray-600 font-medium">Order Details / 订单详情</span>
+                    <span className="text-gray-700 font-medium flex items-center">
+                      总数量 (Total Quantity): <span className="text-blue-600 font-bold text-xl ml-2">{sortedOrders.reduce((acc, order) => acc + (Number(order.quantity) || 0), 0)}</span>
+                    </span>
+                  </div>
                   <div className="overflow-x-auto max-h-[60vh] overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left text-sm relative">
                       <thead className="bg-gray-50 text-gray-600 font-semibold border-b sticky top-0 z-10 shadow-sm">
