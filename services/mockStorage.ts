@@ -6,6 +6,110 @@ const STORAGE_KEYS = {
   CURRENT_ORDERS: 'xinya_current_orders',
 };
 
+const MOCK_SUPPLIERS: Supplier[] = [
+  { id: 'sup_1', name: '新亚冻品 / Xinya Frozen Logistics', created_at: new Date().toISOString() },
+  { id: 'sup_2', name: '万德生鲜 / Wande Fresh Food', created_at: new Date().toISOString() },
+  { id: 'sup_3', name: '泰丰海产 / Taifeng Seafood Co.', created_at: new Date().toISOString() }
+];
+
+const MOCK_PRODUCTS: Product[] = [
+  {
+    id: 'prod_1',
+    name: '冷冻去骨牛小排 / Boneless Beef Short Ribs (Frozen, AAA Grade, Tender Cut)',
+    image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600',
+    company_name: '新亚冻品 / Xinya Frozen Logistics',
+    batch_code: 'XY-BEEF-001',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'prod_2',
+    name: '顶级冷冻黑虎虾 (16/20头) / Premium Frozen Black Tiger Shrimp (Giant Size, Easy Peel)',
+    image_url: 'https://images.unsplash.com/photo-1559737689-d9d06813ce0f?auto=format&fit=crop&q=80&w=600',
+    company_name: '泰丰海产 / Taifeng Seafood Co.',
+    batch_code: 'TF-SHRIMP-1620',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'prod_3',
+    name: '冷冻无骨鸡腿肉 / Frozen Boneless Chicken Thighs (Skin-on, Juicy & Tender, 2kg Pack)',
+    image_url: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&q=80&w=600',
+    company_name: '新亚冻品 / Xinya Frozen Logistics',
+    batch_code: 'XY-CHICKEN-2KG',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'prod_4',
+    name: '冷冻尊贵大带子 / Premium Frozen Jumbo Scallops (Sashimi Grade, Wild Caught)',
+    image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=600',
+    company_name: '泰丰海产 / Taifeng Seafood Co.',
+    batch_code: 'TF-SCALLOP-JUMBO',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'prod_5',
+    name: '手工冷冻韭菜猪肉水饺 / Handmade Frozen Pork & Chives Dumplings (Family Pack, 50pcs)',
+    image_url: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&q=80&w=600',
+    company_name: '万德生鲜 / Wande Fresh Food',
+    batch_code: 'WD-DUMP-PORK',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'prod_6',
+    name: '特级冷冻雪花牛肉片 / Special Select Frozen Beef Slices for Hotpot & BBQ (Ultra-Thin Cut, 500g)',
+    image_url: 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?auto=format&fit=crop&q=80&w=600',
+    company_name: '新亚冻品 / Xinya Frozen Logistics',
+    batch_code: 'XY-BEEF-SLICE',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'prod_7',
+    name: '极品冷冻波士顿龙虾尾 / Frozen Boston Lobster Tails (Double Pack, Sweet & Rich)',
+    image_url: 'https://images.unsplash.com/photo-1559737689-d9d06813ce0f?auto=format&fit=crop&q=80&w=600',
+    company_name: '泰丰海产 / Taifeng Seafood Co.',
+    batch_code: 'TF-LOBSTER-TAIL',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'prod_8',
+    name: '冷冻点心叉烧包 / Frozen BBQ Pork Buns (Soft & Fluffy Steamed Buns, 6pcs Pack)',
+    image_url: null,
+    company_name: '万德生鲜 / Wande Fresh Food',
+    batch_code: 'WD-DIMSUM-BUN',
+    created_at: new Date().toISOString()
+  }
+];
+
+const MOCK_HISTORY: HistorySession[] = [
+  {
+    id: 'sess_1',
+    timestamp: '2026-06-12 14:30:22',
+    name: 'Order for Weekly Stocking',
+    orders: [
+      {
+        id: 'ord_1',
+        productId: 'prod_1',
+        productName: '冷冻去骨牛小排 / Boneless Beef Short Ribs (Frozen, AAA Grade, Tender Cut)',
+        companyName: '新亚冻品 / Xinya Frozen Logistics',
+        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600',
+        stock: '5',
+        quantity: 10,
+        unit: 'case'
+      },
+      {
+        id: 'ord_2',
+        productId: 'prod_3',
+        productName: '冷冻无骨鸡腿肉 / Frozen Boneless Chicken Thighs (Skin-on, Juicy & Tender, 2kg Pack)',
+        companyName: '新亚冻品 / Xinya Frozen Logistics',
+        imageUrl: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&q=80&w=600',
+        stock: '2',
+        quantity: 5,
+        unit: 'case'
+      }
+    ]
+  }
+];
+
+
 export const db = {
   getSuppliers: async (): Promise<Supplier[]> => {
     let { data, error } = await supabase
@@ -48,6 +152,15 @@ export const db = {
   },
 
   getAllProducts: async (): Promise<Product[]> => {
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      const local = localStorage.getItem('local_products');
+      if (!local) {
+        localStorage.setItem('local_products', JSON.stringify(MOCK_PRODUCTS));
+        return MOCK_PRODUCTS;
+      }
+      return JSON.parse(local);
+    }
+
     let allProducts: Product[] = [];
     let from = 0;
     const step = 1000;
@@ -179,6 +292,43 @@ export const db = {
   },
 
   archiveCurrentSession: async (orders: Record<string, OrderItem>, products: Product[]) => {
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      const now = new Date();
+      const newSession: HistorySession = {
+        id: `sess_${now.getTime()}`,
+        timestamp: (() => {
+          const date = now;
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, '0');
+          const dd = String(date.getDate()).padStart(2, '0');
+          const hh = String(date.getHours()).padStart(2, '0');
+          const min = String(date.getMinutes()).padStart(2, '0');
+          const ss = String(date.getSeconds()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+        })(),
+        name: `Order Session - ${now.toLocaleDateString()}`,
+        orders: Object.values(orders).map(order => {
+          const p = products.find(prod => prod.id === order.productId);
+          return {
+            id: order.id,
+            productId: order.productId,
+            stock: order.stock,
+            quantity: order.quantity,
+            unit: order.unit,
+            productName: p?.name || 'Unknown',
+            companyName: p?.company_name || 'Unknown',
+            imageUrl: p?.image_url || null
+          };
+        })
+      };
+
+      const localHistory = JSON.parse(localStorage.getItem('local_history') || '[]');
+      localHistory.unshift(newSession);
+      localStorage.setItem('local_history', JSON.stringify(localHistory));
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_ORDERS);
+      return;
+    }
+
     const now = new Date();
     // Create Session
     const { data: sessionData, error: sessionError } = await supabase
@@ -227,6 +377,15 @@ export const db = {
   },
 
   getHistory: async (): Promise<HistorySession[]> => {
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      const local = localStorage.getItem('local_history');
+      if (!local) {
+        localStorage.setItem('local_history', JSON.stringify(MOCK_HISTORY));
+        return MOCK_HISTORY;
+      }
+      return JSON.parse(local);
+    }
+
     // 1. Fetch sessions
     const { data: sessions, error: sessionsError } = await supabase
       .from('order_sessions')
@@ -247,7 +406,7 @@ export const db = {
       if (data) products = products.concat(data);
       if (error || !data || data.length < pStep) break;
       pFrom += pStep;
-    }
+      }
 
     // Create a lookup map for faster access
     const productMap = new Map(products.map(p => [p.id, p]));
@@ -257,7 +416,7 @@ export const db = {
     let itemsError = null;
     let iFrom = 0;
     const iStep = 1000;
-    
+
     while (true) {
       const { data, error } = await supabase.from('order_items').select('*').range(iFrom, iFrom + iStep - 1);
       if (error) {

@@ -25,6 +25,50 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
   const [tempOrder, setTempOrder] = useState('');
   const [tempUnit, setTempUnit] = useState<OrderUnit>('case');
 
+  // Tooltip state
+  const [hoveredProduct, setHoveredProduct] = useState<Product | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<{ top: number; left: number; position: 'top' | 'bottom' }>({ top: 0, left: 0, position: 'top' });
+
+  useEffect(() => {
+    const dismissTooltip = () => {
+      setHoveredProduct(null);
+    };
+    window.addEventListener('scroll', dismissTooltip, { passive: true });
+    window.addEventListener('resize', dismissTooltip);
+    return () => {
+      window.removeEventListener('scroll', dismissTooltip);
+      window.removeEventListener('resize', dismissTooltip);
+    };
+  }, []);
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, p: Product) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const tooltipWidth = 384; // w-96 is 384px
+    const viewportWidth = window.innerWidth;
+
+    let left = rect.left + rect.width / 2;
+
+    // Boundary constraint
+    if (left - tooltipWidth / 2 < 16) {
+      left = tooltipWidth / 2 + 16;
+    } else if (left + tooltipWidth / 2 > viewportWidth - 16) {
+      left = viewportWidth - tooltipWidth / 2 - 16;
+    }
+
+    const spaceAbove = rect.top;
+    const estimatedHeight = 170; // much more compact vertical height
+    const position = spaceAbove > estimatedHeight ? 'top' : 'bottom';
+
+    const top = position === 'top' ? rect.top - 8 : rect.bottom + 8;
+
+    setHoveredProduct(p);
+    setHoverPosition({ top, left, position });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredProduct(null);
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const [prods, historySessions] = await Promise.all([
@@ -271,6 +315,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
               <div
                 key={p.id}
                 onClick={() => openOrderModal(p)}
+                onMouseEnter={(e) => handleMouseEnter(e, p)}
+                onMouseLeave={handleMouseLeave}
                 className={`group bg-white rounded-2xl p-3 border transition-all cursor-pointer hover:shadow-xl hover:border-blue-400 relative ${order ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200'}`}
               >
                 <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden mb-3 relative">
@@ -499,6 +545,91 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onExit, editingSession, o
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Product Info Tooltip */}
+      {hoveredProduct && (
+        <div
+          className="fixed z-50 w-96 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-150 p-3.5 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95"
+          style={{
+            top: hoverPosition.top,
+            left: hoverPosition.left,
+            transform: hoverPosition.position === 'top' ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
+          }}
+        >
+          <div className="flex gap-3">
+            {/* Left Column: Image Preview */}
+            {hoveredProduct.image_url ? (
+              <div className="w-24 h-24 rounded-xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50 shrink-0 self-center">
+                <img
+                  src={hoveredProduct.image_url}
+                  alt={hoveredProduct.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-24 h-24 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 shrink-0 self-center">
+                <ShoppingCart size={20} className="opacity-40" />
+                <span className="text-[9px] mt-1 font-medium text-center">No Image</span>
+              </div>
+            )}
+
+            {/* Right Column: Text Information */}
+            <div className="flex-1 min-w-0 space-y-1.5 flex flex-col justify-between">
+              {/* Header: Supplier & Code */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100/50 truncate max-w-[160px]">
+                  {hoveredProduct.company_name}
+                </span>
+                {hoveredProduct.batch_code && (
+                  <span className="text-[9px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200/50 shrink-0">
+                    {hoveredProduct.batch_code}
+                  </span>
+                )}
+              </div>
+
+              {/* Title (Full name) */}
+              <h4 className="text-xs font-bold text-gray-900 leading-snug break-words line-clamp-3">
+                {hoveredProduct.name}
+              </h4>
+
+              {/* Stats & Metadata */}
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100/60 text-[10px]">
+                <div>
+                  <span className="text-gray-400 font-medium">历史订货: </span>
+                  <span className="font-bold text-gray-700">
+                    {productOrderStats[hoveredProduct.id] > 0 ? (
+                      <span className="text-orange-600">🔥 {productOrderStats[hoveredProduct.id]} 件/箱</span>
+                    ) : (
+                      <span className="text-gray-500">0 件/箱</span>
+                    )}
+                  </span>
+                </div>
+                <div className="text-[9px] font-mono text-gray-400">
+                  ID: {hoveredProduct.id.substring(0, 8)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Cart Status Banner (if order exists) */}
+          {orders[hoveredProduct.id] ? (
+            <div className="mt-2.5 bg-emerald-50 text-emerald-800 border border-emerald-100/80 rounded-xl p-2 flex items-center justify-between text-[10px] font-semibold">
+              <div className="flex items-center gap-1 truncate mr-2">
+                <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                <span className="truncate">已加入货篮 In Cart</span>
+              </div>
+              <span className="text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded shrink-0">
+                +{orders[hoveredProduct.id].quantity} {orders[hoveredProduct.id].unit}
+                {orders[hoveredProduct.id].stock ? ` (存: ${orders[hoveredProduct.id].stock})` : ''}
+              </span>
+            </div>
+          ) : (
+            <div className="mt-2 text-[9px] text-gray-400 text-center italic border-t border-gray-50 pt-1.5">
+              点击卡片即可进行订购 / Click card to place order
+            </div>
+          )}
         </div>
       )}
     </div>
